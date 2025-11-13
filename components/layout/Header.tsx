@@ -3,6 +3,7 @@ import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggleButton from '../ThemeToggleButton';
+import FontSizeAdjuster from '../FontSizeAdjuster';
 
 const MenuIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M3 4h18v2H3V4Zm0 7h18v2H3v-2Zm0 7h18v2H3v-2Z"></path></svg>
@@ -19,7 +20,7 @@ const Breadcrumbs: React.FC = () => {
     const pathnames = location.pathname.split('/').filter((x) => x);
 
     return (
-        <nav className="flex items-center text-sm" aria-label="Breadcrumb">
+        <nav className="flex items-center" aria-label="Breadcrumb">
             <ol className="inline-flex items-center space-x-1 md:space-x-2">
                 <li className="inline-flex items-center">
                     <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-primary-main">
@@ -71,7 +72,8 @@ const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar, onToggleDesktopS
                   <Breadcrumbs />
                 </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                <FontSizeAdjuster />
                 <ThemeToggleButton />
                 <button
                   onClick={logout}

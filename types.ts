@@ -261,6 +261,9 @@ export interface ToastMessage {
   type: ToastType;
 }
 
+// Font Size Type
+export type FontSize = 'sm' | 'md' | 'lg';
+
 // Deprecated types from old dashboard (can be removed if not used elsewhere)
 export interface StatCardData {
   title: string;

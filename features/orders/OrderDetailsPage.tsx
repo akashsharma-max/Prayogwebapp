@@ -30,7 +30,7 @@ const AddressCard: React.FC<{ address: Address }> = ({ address }) => {
     const isPickup = address.type === 'PICKUP';
     return (
         <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-            <h3 className="text-lg font-bold text-foreground mb-4">{isPickup ? 'Pickup Address' : 'Delivery Address'}</h3>
+            <h3 className="font-bold text-foreground mb-4">{isPickup ? 'Pickup Address' : 'Delivery Address'}</h3>
             <div className="space-y-4">
                 <DetailItem icon={UserCircleIcon} label="Contact Person">{address.name}</DetailItem>
                 <DetailItem icon={LocationPinIcon} label="Address">{`${address.street}, ${address.city}, ${address.state} ${address.zip}`}</DetailItem>
@@ -41,13 +41,13 @@ const AddressCard: React.FC<{ address: Address }> = ({ address }) => {
 
 const ItemsTable: React.FC<{ items: Item[] }> = ({ items }) => (
     <div className="overflow-x-auto mt-4">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full">
             <thead className="bg-muted text-left">
                 <tr>
-                    <th className="px-4 py-2 font-medium text-muted-foreground">Item</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground">SKU</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-right">Quantity</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-right">Unit Price</th>
+                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Item</th>
+                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">SKU</th>
+                    <th className="px-4 py-2 font-medium text-muted-foreground text-right text-xs">Quantity</th>
+                    <th className="px-4 py-2 font-medium text-muted-foreground text-right text-xs">Unit Price</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -68,8 +68,8 @@ const ShipmentCard: React.FC<{ shipment: Shipment }> = ({ shipment }) => (
     <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
         <div className="flex justify-between items-start">
             <div>
-                <h3 className="text-lg font-bold text-foreground">Shipment Details</h3>
-                <p className="text-sm text-muted-foreground">{shipment.awbNumber}</p>
+                <h3 className="font-bold text-foreground">Shipment Details</h3>
+                <p className="text-muted-foreground">{shipment.awbNumber}</p>
             </div>
             <OrderStatusBadge status={shipment.shipmentStatus as any} />
         </div>
@@ -90,13 +90,13 @@ const PaymentDetailsCard: React.FC<{ payment: Payment }> = ({ payment }) => {
 
     return (
         <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center">
+            <h3 className="font-bold text-foreground mb-4 flex items-center">
                 <CreditCardIcon className="w-5 h-5 mr-3 text-muted-foreground" />
                 Payment Details
             </h3>
             <div className="space-y-2 border-t border-border pt-4">
                 {payment.breakdown?.otherCharges?.map(charge => (
-                    <div key={charge.id} className="flex justify-between items-center text-sm">
+                    <div key={charge.id} className="flex justify-between items-center">
                         <p className="text-muted-foreground">{charge.name}</p>
                         <p className="font-medium text-foreground">
                             {charge.chargedAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
@@ -105,7 +105,7 @@ const PaymentDetailsCard: React.FC<{ payment: Payment }> = ({ payment }) => {
                 ))}
             </div>
             {payment.finalAmount && (
-                <div className="flex justify-between items-center mt-4 pt-4 border-t border-border font-bold text-base">
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-border font-bold">
                     <p className="text-foreground">Total Amount</p>
                     <p className="text-primary-main">
                          {payment.finalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
@@ -179,25 +179,19 @@ const OrderDetailsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div>
-                <Link to="/orders/view" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4">
+            <div className="flex items-center justify-between">
+                <Link to="/orders/view" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground">
                     <ArrowLeftIcon className="w-4 h-4 mr-2" />
                     Back to Order History
                 </Link>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground font-heading">Order #{order.orderId}</h1>
-                        <p className="text-muted-foreground">Details for order placed on {formatDate(order.orderDate)}.</p>
-                    </div>
-                    <OrderStatusBadge status={order.orderStatus} />
-                </div>
+                <OrderStatusBadge status={order.orderStatus} />
             </div>
 
             <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h3 className="text-lg font-bold text-foreground mb-4">Order Summary</h3>
+                <h3 className="font-bold text-foreground mb-4">Order Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <DetailItem icon={ClipboardListIcon} label="Reference ID">{order.referenceId}</DetailItem>
-                    <DetailItem icon={CalendarIcon} label="Expected Delivery">{formatDate(order.expectedDeliveryDate)}</DetailItem>
+                    <DetailItem icon={ClipboardListIcon} label="Order ID">{order.orderId}</DetailItem>
+                    <DetailItem icon={CalendarIcon} label="Order Date">{formatDate(order.orderDate)}</DetailItem>
                     <DetailItem icon={PackageIcon} label="Parcel Category">{order.parcelCategory}</DetailItem>
                     <DetailItem icon={CreditCardIcon} label="Payment Mode">{order.payment?.splitPayments ? 'Split' : 'Full'}</DetailItem>
                 </div>

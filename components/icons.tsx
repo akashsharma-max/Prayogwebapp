@@ -143,3 +143,13 @@ export const CreditCardIcon = (props: { className?: string }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
   </svg>
 );
+
+export const FontSizeIcon = (props: React.ComponentProps<'svg'>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M4 7V6h16v1"/>
+    <path d="M10 6v12"/>
+    <path d="M6 18h8"/>
+    <path d="m18 15-2-2 2-2"/>
+    <path d="m20 11 2 2-2 2"/>
+  </svg>
+);

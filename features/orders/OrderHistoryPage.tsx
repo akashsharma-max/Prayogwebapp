@@ -198,18 +198,14 @@ const OrderHistoryPage: React.FC = () => {
     };
     
     return (
-        <div className="space-y-6">
+        <div>
             {state.isBulkLoading && (
                 <div className="fixed inset-0 bg-background bg-opacity-75 flex flex-col items-center justify-center z-50">
                     <RefreshIcon className="w-16 h-16 text-primary-main animate-rotate" />
                     <p className="mt-4 text-lg font-semibold text-foreground">Processing your request...</p>
                 </div>
             )}
-            <div>
-                <h1 className="text-3xl font-bold text-foreground font-heading">Order History</h1>
-                <p className="text-muted-foreground">Track and manage all your orders from a single dashboard.</p>
-            </div>
-
+            
             <div className="bg-card rounded-lg shadow-custom-light border border-border">
                 <OrderHistoryToolbar
                     searchQuery={state.searchQuery}

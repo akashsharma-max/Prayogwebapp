@@ -24,19 +24,9 @@ const RateCardsPage: React.FC = () => {
     }, [searchTerm]);
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground font-heading">Rate Cards</h1>
-                    <p className="text-muted-foreground">Manage your service rate cards across different regions.</p>
-                </div>
-                 <button className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors self-start md:self-auto">
-                    + Add New Card
-                </button>
-            </div>
-
-            <div className="mb-6 p-6 bg-card rounded-lg shadow-custom-light border border-border">
-                <div className="relative">
+        <div className="space-y-6">
+            <div className="p-4 bg-card rounded-lg shadow-custom-light border border-border flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="relative w-full md:flex-grow">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <SearchIcon className="text-muted-foreground" />
                     </div>
@@ -48,6 +38,9 @@ const RateCardsPage: React.FC = () => {
                         className="block w-full pl-10 pr-3 py-2 border border-border rounded-lg leading-5 bg-input placeholder-muted-foreground text-foreground focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-main focus:border-primary-main sm:text-sm"
                     />
                 </div>
+                 <button className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors w-full md:w-auto flex-shrink-0">
+                    + Add New Card
+                </button>
             </div>
 
             <RateCardTable rateCards={filteredRateCards} />

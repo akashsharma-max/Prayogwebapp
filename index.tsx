@@ -4,6 +4,7 @@ import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { FontSizeProvider } from './context/FontSizeContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,7 +17,9 @@ root.render(
     <HashRouter>
       <AuthProvider>
         <ThemeProvider>
-          <App />
+          <FontSizeProvider>
+            <App />
+          </FontSizeProvider>
         </ThemeProvider>
       </AuthProvider>
     </HashRouter>
