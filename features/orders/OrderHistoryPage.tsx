@@ -8,6 +8,13 @@ import { RefreshIcon } from '../../components/icons';
 import { useToast } from '../../App';
 import apiClient, { ApiError } from '../../lib/apiClient';
 
+type Filters = {
+    awbNumber: string;
+    deliveryPromise: string;
+    paymentMode: string;
+    orderStatus: OrderStatus[];
+};
+
 type State = {
     orders: OrderEntity[];
     totalOrders: number;
@@ -16,6 +23,7 @@ type State = {
     pagination: { pageIndex: number; pageSize: number };
     sorting: { id: string; desc: boolean }[];
     searchQuery: string;
+    filters: Filters;
     selectedRowIds: Record<string, boolean>;
 };
 
@@ -25,6 +33,7 @@ type Action =
     | { type: 'SET_PAGINATION'; payload: { pageIndex: number; pageSize: number } }
     | { type: 'SET_SORTING'; payload: { id: string; desc: boolean }[] }
     | { type: 'SET_SEARCH'; payload: string }
+    | { type: 'SET_FILTERS'; payload: Filters }
     | { type: 'SET_SELECTED_ROWS'; payload: Record<string, boolean> }
     | { type: 'START_BULK_ACTION' }
     | { type: 'END_BULK_ACTION' };
@@ -37,6 +46,12 @@ const initialState: State = {
     pagination: { pageIndex: 0, pageSize: 10 },
     sorting: [],
     searchQuery: '',
+    filters: {
+        awbNumber: '',
+        deliveryPromise: '',
+        paymentMode: '',
+        orderStatus: [],
+    },
     selectedRowIds: {},
 };
 
@@ -52,6 +67,8 @@ function reducer(state: State, action: Action): State {
             return { ...state, sorting: action.payload };
         case 'SET_SEARCH':
             return { ...state, searchQuery: action.payload, pagination: { ...state.pagination, pageIndex: 0 } };
+        case 'SET_FILTERS':
+            return { ...state, filters: action.payload, pagination: { ...state.pagination, pageIndex: 0 } };
         case 'SET_SELECTED_ROWS':
             return { ...state, selectedRowIds: action.payload };
         case 'START_BULK_ACTION':
@@ -140,6 +157,13 @@ const OrderHistoryPage: React.FC = () => {
                 params.append('orderId', trimmedSearchQuery);
             }
 
+            // Append filters
+            if (state.filters.awbNumber) params.append('awbNumber', state.filters.awbNumber);
+            if (state.filters.deliveryPromise) params.append('deliveryPromise', state.filters.deliveryPromise);
+            if (state.filters.paymentMode) params.append('paymentMode', state.filters.paymentMode);
+            if (state.filters.orderStatus.length > 0) params.append('orderStatus', state.filters.orderStatus.join(','));
+
+
             const data = await apiClient.get('/gateway/booking-service/orders', params);
 
             if (data.status !== 'success' || !data.data) {
@@ -157,7 +181,7 @@ const OrderHistoryPage: React.FC = () => {
             addToast(errorMessage, 'error');
             dispatch({ type: 'SET_DATA', payload: { orders: [], total: 0 } });
         }
-    }, [state.pagination, state.sorting, state.searchQuery, addToast]);
+    }, [state.pagination, state.sorting, state.searchQuery, state.filters, addToast]);
 
 
     useEffect(() => {
@@ -190,6 +214,8 @@ const OrderHistoryPage: React.FC = () => {
                 <OrderHistoryToolbar
                     searchQuery={state.searchQuery}
                     onSearchChange={(query) => dispatch({ type: 'SET_SEARCH', payload: query })}
+                    filters={state.filters}
+                    onFiltersChange={(newFilters) => dispatch({ type: 'SET_FILTERS', payload: newFilters })}
                     selectedRowCount={Object.keys(state.selectedRowIds).length}
                     onBulkAction={handleBulkAction}
                     allColumns={allColumns}

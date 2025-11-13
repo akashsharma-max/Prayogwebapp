@@ -1,9 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { SearchIcon, FilterIcon, ChevronDownIcon, ViewColumnsIcon } from '../../../components/icons';
+import { OrderStatus } from '../../../types';
+
+type Filters = {
+    awbNumber: string;
+    deliveryPromise: string;
+    paymentMode: string;
+    orderStatus: OrderStatus[];
+};
 
 interface OrderHistoryToolbarProps {
     searchQuery: string;
     onSearchChange: (query: string) => void;
+    filters: Filters;
+    onFiltersChange: (filters: Filters) => void;
     selectedRowCount: number;
     onBulkAction: (action: string) => void;
     allColumns: { id: string; label: string; }[];
@@ -11,21 +22,95 @@ interface OrderHistoryToolbarProps {
     setColumnVisibility: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
-const OrderHistoryToolbar: React.FC<OrderHistoryToolbarProps> = ({ searchQuery, onSearchChange, selectedRowCount, onBulkAction, allColumns, columnVisibility, setColumnVisibility }) => {
+const allStatuses: OrderStatus[] = ['CONFIRMED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'PENDING', 'PROCESSING', 'FAILED', 'READY_FOR_DISPATCH'];
+const allServiceTypes = ['Standard', 'Express', 'Same Day'];
+const allPaymentModes = ['Prepaid', 'COD'];
+
+const FilterPopover: React.FC<{
+    filters: Filters;
+    onFiltersChange: (filters: Filters) => void;
+    onClose: () => void;
+}> = ({ filters, onFiltersChange, onClose }) => {
+    const [localFilters, setLocalFilters] = useState(filters);
+
+    const handleStatusChange = (status: OrderStatus) => {
+        setLocalFilters(prev => {
+            const newStatus = prev.orderStatus.includes(status)
+                ? prev.orderStatus.filter(s => s !== status)
+                : [...prev.orderStatus, status];
+            return { ...prev, orderStatus: newStatus };
+        });
+    };
+
+    const handleApply = () => {
+        onFiltersChange(localFilters);
+        onClose();
+    };
+
+    const handleClear = () => {
+        const clearedFilters = { awbNumber: '', deliveryPromise: '', paymentMode: '', orderStatus: [] };
+        setLocalFilters(clearedFilters);
+        onFiltersChange(clearedFilters);
+        onClose();
+    };
+
+    return (
+        <div className="absolute right-0 mt-2 w-80 bg-card rounded-md shadow-lg z-20 border border-border p-4">
+            <h4 className="font-semibold text-foreground mb-4">Filters</h4>
+            <div className="space-y-4">
+                <div>
+                    <label className="text-xs font-medium text-muted-foreground">Document Number</label>
+                    <input type="text" value={localFilters.awbNumber} onChange={e => setLocalFilters(f => ({...f, awbNumber: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-border rounded-md text-sm bg-input focus:outline-none focus:ring-primary-main"/>
+                </div>
+                 <div>
+                    <label className="text-xs font-medium text-muted-foreground">Service Type</label>
+                    <select value={localFilters.deliveryPromise} onChange={e => setLocalFilters(f => ({...f, deliveryPromise: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-border rounded-md text-sm bg-input focus:outline-none focus:ring-primary-main">
+                        <option value="">All</option>
+                        {allServiceTypes.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                </div>
+                 <div>
+                    <label className="text-xs font-medium text-muted-foreground">Payment Mode</label>
+                    <select value={localFilters.paymentMode} onChange={e => setLocalFilters(f => ({...f, paymentMode: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-border rounded-md text-sm bg-input focus:outline-none focus:ring-primary-main">
+                        <option value="">All</option>
+                        {allPaymentModes.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="text-xs font-medium text-muted-foreground">Status</label>
+                    <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                        {allStatuses.map(status => (
+                            <label key={status} className="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" checked={localFilters.orderStatus.includes(status)} onChange={() => handleStatusChange(status)} className="rounded border-border text-primary-main focus:ring-primary-main bg-input" />
+                                <span>{status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6 border-t border-border pt-4">
+                <button onClick={handleClear} className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-muted">Clear</button>
+                <button onClick={handleApply} className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark">Apply</button>
+            </div>
+        </div>
+    );
+};
+
+
+const OrderHistoryToolbar: React.FC<OrderHistoryToolbarProps> = ({ searchQuery, onSearchChange, filters, onFiltersChange, selectedRowCount, onBulkAction, allColumns, columnVisibility, setColumnVisibility }) => {
     const [isBulkMenuOpen, setBulkMenuOpen] = useState(false);
     const [isColumnMenuOpen, setColumnMenuOpen] = useState(false);
+    const [isFilterOpen, setFilterOpen] = useState(false);
     
     const bulkMenuRef = useRef<HTMLDivElement>(null);
     const columnMenuRef = useRef<HTMLDivElement>(null);
+    const filterMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (bulkMenuRef.current && !bulkMenuRef.current.contains(event.target as Node)) {
-                setBulkMenuOpen(false);
-            }
-            if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) {
-                setColumnMenuOpen(false);
-            }
+            if (bulkMenuRef.current && !bulkMenuRef.current.contains(event.target as Node)) setBulkMenuOpen(false);
+            if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) setColumnMenuOpen(false);
+            if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) setFilterOpen(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -34,6 +119,10 @@ const OrderHistoryToolbar: React.FC<OrderHistoryToolbarProps> = ({ searchQuery, 
     const toggleColumn = (id: string) => {
         setColumnVisibility(prev => ({ ...prev, [id]: !prev[id] }));
     };
+
+    const areFiltersActive = useMemo(() => {
+        return filters.awbNumber || filters.deliveryPromise || filters.paymentMode || filters.orderStatus.length > 0;
+    }, [filters]);
 
     const toggleableColumns = allColumns.filter(c => c.id !== 'selection' && c.id !== 'actions');
 
@@ -73,9 +162,13 @@ const OrderHistoryToolbar: React.FC<OrderHistoryToolbarProps> = ({ searchQuery, 
                     </div>
                 )}
 
-                <button className="flex items-center gap-2 px-4 py-2 border border-border text-foreground bg-card rounded-lg text-sm font-medium hover:bg-muted">
-                    <FilterIcon className="text-muted-foreground"/> Filters
-                </button>
+                <div className="relative" ref={filterMenuRef}>
+                    <button onClick={() => setFilterOpen(!isFilterOpen)} className="relative flex items-center gap-2 px-4 py-2 border border-border text-foreground bg-card rounded-lg text-sm font-medium hover:bg-muted">
+                        <FilterIcon className="text-muted-foreground"/> Filters
+                        {areFiltersActive && <span className="absolute -top-1 -right-1 block h-2 w-2 rounded-full bg-primary-main"></span>}
+                    </button>
+                     {isFilterOpen && <FilterPopover filters={filters} onFiltersChange={onFiltersChange} onClose={() => setFilterOpen(false)} />}
+                </div>
                 
                 <div className="relative" ref={columnMenuRef}>
                     <button 
