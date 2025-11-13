@@ -10,8 +10,6 @@ const SettingsLayout: React.FC = () => {
     const [isDesktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
     const { logout } = useAuth();
 
-    const mainContentMargin = isDesktopSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64';
-
     return (
         <div className="flex h-screen bg-gray-100">
             <Sidebar 
@@ -20,7 +18,7 @@ const SettingsLayout: React.FC = () => {
                 onCloseMobile={() => setMobileSidebarOpen(false)}
                 isCollapsed={isDesktopSidebarCollapsed}
             />
-            <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${mainContentMargin}`}>
+            <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300`}>
                 <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-white border-b-2 border-gray-200">
                     <div className="flex items-center">
                         <button onClick={() => setMobileSidebarOpen(!isMobileSidebarOpen)} className="text-gray-500 focus:outline-none lg:hidden mr-4">
@@ -44,7 +42,7 @@ const SettingsLayout: React.FC = () => {
                     </div>
                 </header>
                 <main className="flex-1 overflow-x-hidden overflow-y-auto">
-                    <div className="px-6 py-8">
+                    <div className="max-w-screen-2xl mx-auto px-6 py-8">
                         <Outlet />
                     </div>
                 </main>

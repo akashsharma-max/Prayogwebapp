@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect, ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { OrderDetail, Address, Shipment, Item, OrderStatus } from '../../types';
+import { OrderDetail, Address, Shipment, Item, OrderStatus, Payment } from '../../types';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import { 
     ArrowLeftIcon,
     CalendarIcon,
     ClipboardListIcon,
+    CreditCardIcon,
     LocationPinIcon,
     PackageIcon,
     UserCircleIcon,
@@ -82,6 +82,39 @@ const ShipmentCard: React.FC<{ shipment: Shipment }> = ({ shipment }) => (
         {shipment.items && shipment.items.length > 0 && <ItemsTable items={shipment.items} />}
     </div>
 );
+
+const PaymentDetailsCard: React.FC<{ payment: Payment }> = ({ payment }) => {
+    if (!payment || (!payment.finalAmount && !payment.breakdown?.otherCharges?.length)) {
+        return null;
+    }
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <CreditCardIcon className="w-5 h-5 mr-3 text-gray-400" />
+                Payment Details
+            </h3>
+            <div className="space-y-2 border-t pt-4">
+                {payment.breakdown?.otherCharges?.map(charge => (
+                    <div key={charge.id} className="flex justify-between items-center text-sm">
+                        <p className="text-gray-600">{charge.name}</p>
+                        <p className="font-medium text-gray-800">
+                            {charge.chargedAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                        </p>
+                    </div>
+                ))}
+            </div>
+            {payment.finalAmount && (
+                <div className="flex justify-between items-center mt-4 pt-4 border-t font-bold text-base">
+                    <p className="text-gray-800">Total Amount</p>
+                    <p className="text-primary-main">
+                         {payment.finalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const OrderDetailsPage: React.FC = () => {
@@ -175,6 +208,8 @@ const OrderDetailsPage: React.FC = () => {
                 {pickupAddress && <AddressCard address={pickupAddress} />}
                 {deliveryAddress && <AddressCard address={deliveryAddress} />}
             </div>
+
+            {order.payment && <PaymentDetailsCard payment={order.payment} />}
 
             <div className="space-y-6">
                 {order.shipments && order.shipments.map(shipment => (

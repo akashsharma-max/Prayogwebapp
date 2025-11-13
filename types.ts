@@ -192,16 +192,23 @@ export interface Discount {
   value: number;
 }
 
+export interface OtherCharge {
+  id: number;
+  name: string;
+  chargedAmount: number;
+}
+
 export interface Payment {
   id: number;
+  finalAmount: number;
   breakdown: {
     id: number;
     subTotal: number;
-    taxes: any | null;
-    discounts: any | null;
-    otherCharges: any | null;
+    taxes: any[] | null;
+    discounts: any[] | null;
+    otherCharges: OtherCharge[] | null;
   };
-  splitPayments: any | null;
+  splitPayments: any[] | null;
 }
 
 
