@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SaaS Navigation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Public Sans', 'sans-serif'],
+            },
+            colors: {
+              primary: {
+                main: '#2675FE',
+                light: '#6FA3FD',
+                dark: '#1A52B8',
+                lighter: '#C8D9FE',
+              },
+              secondary: {
+                main: '#00DCDA',
+              },
+              info: {
+                 main: '#00B8D9',
+                 light: '#61F3F3',
+                 dark: '#006C9C',
+                 darker: '#003768',
+                 lighter: '#CAFDF5'
+              },
+              success: {
+                main: '#22C55E',
+                light: '#77ED8B',
+                dark: '#118D57',
+                darker: '#065E49',
+                lighter: '#D3FCD2'
+              },
+              warning: {
+                main: '#FFAB00',
+                light: '#FFD666',
+                dark: '#B76E00',
+                darker: '#7A4100',
+                lighter: '#FFF5CC'
+              },
+              error: {
+                main: '#FF5630',
+                light: '#FFAC82',
+                dark: '#B71D18',
+                darker: '#7A0916',
+                lighter: '#FFE9D5'
+              },
+            },
+            keyframes: {
+              rotate: {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' },
+              },
+            },
+            animation: {
+              rotate: 'rotate 1s linear infinite',
+            },
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Public Sans', sans-serif;
+        background-color: #f4f6f8; /* A slightly darker gray for better contrast */
+      }
+      /* Responsive Table Styles */
+      @media screen and (max-width: 960px) {
+        .responsive-table thead {
+          display: none;
+        }
+        .responsive-table tbody tr {
+          display: block;
+          margin-bottom: 1rem;
+          border: 1px solid #e5e7eb; /* border-gray-200 */
+          border-radius: 0.5rem; /* rounded-lg */
+          overflow: hidden;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow */
+        }
+        .responsive-table td {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          text-align: right;
+          border-bottom: 1px solid #f3f4f6; /* gray-100 */
+        }
+        .responsive-table td:last-child {
+          border-bottom: 0;
+        }
+        .responsive-table td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          text-align: left;
+          margin-right: 1rem;
+          color: #4b5563; /* gray-600 */
+        }
+        /* Specific cell adjustments */
+        .responsive-table td[data-label=""] { /* For checkbox */
+            justify-content: flex-start;
+        }
+        .responsive-table td[data-label=""]::before {
+            content: none;
+        }
+        .responsive-table td[data-label="Actions"] {
+            justify-content: flex-end;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

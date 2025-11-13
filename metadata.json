@@ -1,0 +1,5 @@
+{
+  "name": "SaaS Navigation Demo",
+  "description": "A React and TypeScript application demonstrating a complex, multi-level sidebar navigation structure for a SaaS product.",
+  "requestFramePermissions": []
+}
