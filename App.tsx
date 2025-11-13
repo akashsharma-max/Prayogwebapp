@@ -10,6 +10,7 @@ import { NavItem, ToastMessage, ToastType } from './types';
 import { mainNav, settingsNav } from './navigation';
 import RateCardsPage from './features/rate-cards/RateCardsPage';
 import OrderHistoryPage from './features/orders/OrderHistoryPage';
+import OrderDetailsPage from './features/orders/OrderDetailsPage';
 import { XCircleIcon } from './components/icons';
 
 // --- START TOAST NOTIFICATION SYSTEM ---
@@ -135,6 +136,7 @@ const App: React.FC = () => {
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               {generateRoutes(mainNav)}
+              <Route path="/orders/view/:orderId" element={<OrderDetailsPage />} />
             </Route>
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="/settings/profile" replace />} />

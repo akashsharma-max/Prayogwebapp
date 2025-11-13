@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { User } from '../types';
+import apiClient from '../lib/apiClient';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -10,8 +11,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_BASE_URL = 'https://sandbox-apis.prayog.io';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,24 +39,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: email,
-          password: pass,
-          signinType: 'EMAIL',
-        }),
+      const data = await apiClient.post('/auth/login', {
+        username: email,
+        password: pass,
+        signinType: 'EMAIL',
       });
-
-      if (!response.ok) {
-        console.error("Login failed with status:", response.status);
-        return false;
-      }
-
-      const data = await response.json();
       
       if (data && data.id_token) {
         localStorage.setItem('authData', JSON.stringify(data));

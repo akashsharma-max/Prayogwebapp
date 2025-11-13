@@ -76,6 +76,135 @@ export interface OrderEntity {
   parcelCategory: 'DOMESTIC' | 'INTERNATIONAL';
 }
 
+// Order Detail Page Types
+export interface OrderDetail {
+  id: number;
+  bookingType: string;
+  orderId: string;
+  referenceId: string;
+  parcelCategory: string;
+  orderDate: string;
+  expectedDeliveryDate: string;
+  orderType: string;
+  returnable: boolean;
+  deliveryMode: string;
+  deliveryPromise: string;
+  orderStatus: OrderStatus;
+  metadata: {
+    createdBy: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  addresses: Address[];
+  documents: any[]; 
+  shipments: Shipment[];
+  vehicles: any[];
+  slots: any[];
+  payment: Payment;
+  taxes: any[];
+  discounts: any[];
+  orderSource: {
+    id: number;
+  };
+}
+
+export interface Address {
+  id: number;
+  type: 'PICKUP' | 'DELIVERY' | string;
+  zip: string;
+  name: string;
+  phone: string;
+  email: string;
+  street: string;
+  landmark: string;
+  city: string;
+  state: string;
+  country: string;
+  countryCode: string;
+  hubId: number;
+  latitude: number;
+  longitude: number;
+  addressName: string;
+}
+
+export interface Shipment {
+  id: number;
+  isChild?: boolean;
+  isParent?: boolean;
+  awbNumber: string;
+  shipmentStatus: string;
+  documentType: string;
+  dimensions: {
+    unit: string;
+    width: number;
+    height: number;
+    length: number;
+  };
+  physicalWeight: number;
+  volumetricWeight: number;
+  note: string;
+  packaging: Packaging;
+  items: Item[];
+}
+
+export interface Packaging {
+  id: number;
+  type: string;
+  materials: string[];
+  fragileHandling: boolean;
+  temperatureRange: {
+    max: number;
+    min: number;
+    unit: string;
+  };
+}
+
+export interface Item {
+  id: number;
+  name: string;
+  quantity: number;
+  weight: number;
+  unitPrice: number;
+  sku: string;
+  hsnCode: string;
+  dimensions: {
+    unit: string;
+    width: number;
+    height: number;
+    length: number;
+  };
+  description: string;
+  taxes: Tax[];
+  discounts: Discount[];
+}
+
+export interface Tax {
+  id: number;
+  name: string;
+  type: string;
+  value: number;
+}
+
+export interface Discount {
+  id: number;
+  name: string;
+  type: string;
+  value: number;
+}
+
+export interface Payment {
+  id: number;
+  breakdown: {
+    id: number;
+    subTotal: number;
+    taxes: any | null;
+    discounts: any | null;
+    otherCharges: any | null;
+  };
+  splitPayments: any | null;
+}
+
+
 // Existing types (kept for other pages)
 export interface User {
   id: string;

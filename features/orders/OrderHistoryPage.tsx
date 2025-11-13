@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import { OrderEntity, OrderStatus } from '../../types';
 import OrderHistoryToolbar from './components/OrderHistoryToolbar';
@@ -5,8 +6,7 @@ import OrderHistoryTable from './components/OrderHistoryTable';
 import OrderPagination from './components/OrderPagination';
 import { RefreshIcon } from '../../components/icons';
 import { useToast } from '../../App';
-
-const API_BASE_URL = 'https://sandbox-apis.prayog.io';
+import apiClient, { ApiError } from '../../lib/apiClient';
 
 type State = {
     orders: OrderEntity[];
@@ -120,76 +120,45 @@ const OrderHistoryPage: React.FC = () => {
     const { addToast } = useToast();
     const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(initialVisibility);
 
-    const fetchData = useCallback(() => {
+    const fetchData = useCallback(async () => {
         dispatch({ type: 'START_LOADING' });
 
-        const authDataString = localStorage.getItem('authData');
-        if (!authDataString) {
-            addToast("Authentication data not found. Please log in.", 'error');
-            dispatch({ type: 'SET_DATA', payload: { orders: [], total: 0 } });
-            return;
-        }
+        try {
+            const params = new URLSearchParams();
+            params.append('page', String(state.pagination.pageIndex + 1));
+            params.append('limit', String(state.pagination.pageSize));
 
-        const token = JSON.parse(authDataString)?.id_token;
-        if (!token) {
-            addToast("Authentication token not found. Please log in.", 'error');
-            dispatch({ type: 'SET_DATA', payload: { orders: [], total: 0 } });
-            return;
-        }
-
-        const params = new URLSearchParams();
-        params.append('page', String(state.pagination.pageIndex + 1));
-        params.append('limit', String(state.pagination.pageSize));
-
-        const sort = state.sorting[0];
-        if (sort && columnIdToApiSortField[sort.id]) {
-            const apiField = columnIdToApiSortField[sort.id];
-            params.append('sort_by', apiField);
-            params.append('order', sort.desc ? 'desc' : 'asc');
-        }
-
-        const trimmedSearchQuery = state.searchQuery.trim();
-        if (trimmedSearchQuery) {
-            params.append('orderId', trimmedSearchQuery);
-        }
-
-        fetch(`${API_BASE_URL}/gateway/booking-service/orders?${params.toString()}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
+            const sort = state.sorting[0];
+            if (sort && columnIdToApiSortField[sort.id]) {
+                const apiField = columnIdToApiSortField[sort.id];
+                params.append('sort_by', apiField);
+                params.append('order', sort.desc ? 'desc' : 'asc');
             }
-        })
-        .then(async response => {
-            if (!response.ok) {
-                let errorMessage = `API request failed with status ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    if (errorData && errorData.message) {
-                        errorMessage = errorData.message;
-                    }
-                } catch (jsonError) {
-                    // Body might not be JSON, or empty. The default message is sufficient.
-                }
-                throw new Error(errorMessage);
+
+            const trimmedSearchQuery = state.searchQuery.trim();
+            if (trimmedSearchQuery) {
+                params.append('orderId', trimmedSearchQuery);
             }
-            return response.json();
-        })
-        .then(data => {
+
+            const data = await apiClient.get('/gateway/booking-service/orders', params);
+
             if (data.status !== 'success' || !data.data) {
                 throw new Error(data.message || "Invalid API response format");
             }
+            
             const rawOrders = data.data || [];
             const total = data.count || 0;
-
             const mappedOrders: OrderEntity[] = rawOrders.map(mapApiDataToOrderEntity);
 
             dispatch({ type: 'SET_DATA', payload: { orders: mappedOrders, total: total } });
-        })
-        .catch(error => {
-            console.error("Failed to fetch order history:", error.message);
-            addToast(error.message, 'error');
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : "Failed to fetch order history.";
+            console.error("Fetch error:", error);
+            addToast(errorMessage, 'error');
             dispatch({ type: 'SET_DATA', payload: { orders: [], total: 0 } });
-        });
+        }
     }, [state.pagination, state.sorting, state.searchQuery, addToast]);
+
 
     useEffect(() => {
         fetchData();
