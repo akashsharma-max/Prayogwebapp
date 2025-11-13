@@ -9,7 +9,7 @@ const MainLayout: React.FC = () => {
     const [isDesktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-background">
             <Sidebar 
                 navConfig={mainNav} 
                 isMobileOpen={isMobileSidebarOpen}

@@ -10,7 +10,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
+      // Flicker-prevention script
+      (function() {
+        const theme = localStorage.getItem('theme') || 'system';
+        if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
@@ -54,6 +65,16 @@
                 darker: '#7A0916',
                 lighter: '#FFE9D5'
               },
+              // Theming colors
+              background: 'var(--color-background)',
+              foreground: 'var(--color-foreground)',
+              card: 'var(--color-card)',
+              'card-foreground': 'var(--color-card-foreground)',
+              muted: 'var(--color-muted)',
+              'muted-foreground': 'var(--color-muted-foreground)',
+              border: 'var(--color-border)',
+              input: 'var(--color-input)',
+              ring: 'var(--color-ring)',
             },
             keyframes: {
               rotate: {
@@ -69,9 +90,37 @@
       }
     </script>
     <style>
+      :root {
+        --color-background: #f4f6f8;
+        --color-foreground: #212B36;
+        --color-card: #ffffff;
+        --color-card-foreground: #212B36;
+        --color-muted: #F9FAFB;
+        --color-muted-foreground: #637381;
+        --color-border: #E5E7EB;
+        --color-input: #ffffff;
+        --color-ring: #2675FE;
+        --recharts-tooltip-background: rgba(255, 255, 255, 0.9);
+        --recharts-tooltip-border: #DFE3E8;
+      }
+      .dark {
+        --color-background: #161C24;
+        --color-foreground: #FFFFFF;
+        --color-card: #212B36;
+        --color-card-foreground: #FFFFFF;
+        --color-muted: #212B36;
+        --color-muted-foreground: #919EAB;
+        --color-border: #454F5B;
+        --color-input: #212B36;
+        --color-ring: #2675FE;
+        --recharts-tooltip-background: rgba(33, 43, 54, 0.9);
+        --recharts-tooltip-border: #454F5B;
+      }
       body {
         font-family: 'Public Sans', sans-serif;
-        background-color: #f4f6f8; /* A slightly darker gray for better contrast */
+        background-color: var(--color-background);
+        color: var(--color-foreground);
+        transition: background-color 0.2s, color 0.2s;
       }
       /* Responsive Table Styles */
       @media screen and (max-width: 960px) {
@@ -81,7 +130,7 @@
         .responsive-table tbody tr {
           display: block;
           margin-bottom: 1rem;
-          border: 1px solid #e5e7eb; /* border-gray-200 */
+          border: 1px solid var(--color-border);
           border-radius: 0.5rem; /* rounded-lg */
           overflow: hidden;
           box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow */
@@ -92,7 +141,7 @@
           align-items: center;
           padding: 0.75rem 1rem;
           text-align: right;
-          border-bottom: 1px solid #f3f4f6; /* gray-100 */
+          border-bottom: 1px solid var(--color-border);
         }
         .responsive-table td:last-child {
           border-bottom: 0;
@@ -102,7 +151,7 @@
           font-weight: 600;
           text-align: left;
           margin-right: 1rem;
-          color: #4b5563; /* gray-600 */
+          color: var(--color-muted-foreground);
         }
         /* Specific cell adjustments */
         .responsive-table td[data-label=""] { /* For checkbox */

@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -42,20 +43,20 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white shadow-custom-light rounded-lg">
+    <div className="min-h-screen bg-background flex items-center justify-center font-sans">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card shadow-custom-light rounded-lg border border-border">
         <div className="flex flex-col items-center">
           <PrayogLogo />
-          <h2 className="mt-4 text-3xl font-extrabold text-gray-900 font-heading">
+          <h2 className="mt-4 text-3xl font-extrabold text-foreground font-heading">
             Sign in to Prayog
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Welcome back! Please enter your details.
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <div className="rounded-md shadow-sm -space-y-px">
+            <div className="space-y-4">
               <div>
                 <label htmlFor="email-address" className="sr-only">Email address</label>
                 <input
@@ -64,7 +65,7 @@ const LoginPage: React.FC = () => {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-lg focus:outline-none focus:ring-primary-main focus:border-primary-main focus:z-10 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-3 border border-border rounded-lg placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-primary-main focus:border-primary-main sm:text-sm"
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -78,7 +79,7 @@ const LoginPage: React.FC = () => {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-lg focus:outline-none focus:ring-primary-main focus:border-primary-main focus:z-10 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-3 border border-border rounded-lg placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-primary-main focus:border-primary-main sm:text-sm"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -101,8 +102,8 @@ const LoginPage: React.FC = () => {
           )}
 
            <div className="flex items-center justify-between">
-             <p className="text-sm text-gray-500">
-                Use <code className="bg-gray-200 p-1 rounded">admin@prayog.com</code> and <code className="bg-gray-200 p-1 rounded">password</code>
+             <p className="text-sm text-muted-foreground">
+                Use <code className="bg-muted p-1 rounded">admin@prayog.com</code> and <code className="bg-muted p-1 rounded">password</code>
              </p>
            </div>
           
@@ -110,7 +111,7 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-main hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main disabled:bg-primary-light transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-main hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>

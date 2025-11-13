@@ -23,13 +23,13 @@ const OrdersOverviewChart: React.FC<OrdersOverviewChartProps> = ({ chartData, is
     });
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-sm">
+        <div className="p-6 bg-card rounded-lg shadow-sm border border-border">
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-800">Orders Overview</h3>
-                    <p className="text-sm text-gray-500">Order status breakdown for {new Date().getFullYear()}</p>
+                    <h3 className="text-lg font-bold text-foreground">Orders Overview</h3>
+                    <p className="text-sm text-muted-foreground">Order status breakdown for {new Date().getFullYear()}</p>
                 </div>
-                <button onClick={onRefresh} className="text-gray-400 hover:text-gray-600">
+                <button onClick={onRefresh} className="text-muted-foreground hover:text-foreground">
                     <RefreshIcon className={`w-5 h-5 ${isLoading ? 'animate-rotate' : ''}`} />
                 </button>
             </div>
@@ -39,12 +39,17 @@ const OrdersOverviewChart: React.FC<OrdersOverviewChartProps> = ({ chartData, is
                         data={formattedData}
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                     >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#637381' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 12, fill: '#637381' }} axisLine={false} tickLine={false} />
+                        <CartesianGrid stroke="var(--color-border)" vertical={false} />
+                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }} axisLine={false} tickLine={false} />
                         <Tooltip
-                             contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #DFE3E8' }}
-                             cursor={{ strokeDasharray: '3 3' }}
+                             contentStyle={{ 
+                                 backgroundColor: 'var(--recharts-tooltip-background)', 
+                                 borderRadius: '8px', 
+                                 border: '1px solid var(--recharts-tooltip-border)',
+                                 color: 'var(--color-card-foreground)'
+                             }}
+                             cursor={{ stroke: 'var(--color-border)', strokeDasharray: '3 3' }}
                         />
                         <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '20px' }} />
                         {series.map((s, index) => (

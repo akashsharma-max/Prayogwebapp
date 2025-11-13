@@ -34,14 +34,14 @@ const WidgetSummaryCard: React.FC<WidgetSummaryCardProps> = ({ widget, isLoading
     const config = colorConfig[color];
 
     return (
-        <div className={`p-6 bg-white rounded-lg shadow-sm`}>
+        <div className={`p-6 bg-card rounded-lg shadow-sm border border-border`}>
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-600">{title}</h3>
-                <button onClick={onRefresh} className="text-gray-400 hover:text-gray-600">
+                <h3 className="text-sm font-semibold text-muted-foreground">{title}</h3>
+                <button onClick={onRefresh} className="text-muted-foreground hover:text-foreground">
                     <RefreshIcon className={`w-5 h-5 ${isLoading ? 'animate-rotate' : ''}`} />
                 </button>
             </div>
-            <div className="mt-2 text-3xl font-bold text-gray-800">
+            <div className="mt-2 text-3xl font-bold text-foreground">
                 {formatNumber(total, isCurrency)}
             </div>
             <div className="flex items-center mt-1 text-sm">
@@ -49,7 +49,7 @@ const WidgetSummaryCard: React.FC<WidgetSummaryCardProps> = ({ widget, isLoading
                     {isPositive ? <ArrowUpIcon className="w-4 h-4 mr-1"/> : <ArrowDownIcon className="w-4 h-4 mr-1"/>}
                     {Math.abs(percent)}%
                 </span>
-                <span className="ml-1 text-gray-500">than last week</span>
+                <span className="ml-1 text-muted-foreground">than last week</span>
             </div>
              <div className="h-20 mt-4 -mx-6 -mb-6">
                 <ResponsiveContainer width="100%" height="100%">

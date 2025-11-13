@@ -71,18 +71,18 @@ const RowActions: React.FC<{ order: OrderEntity }> = ({ order }) => {
 
     return (
         <div className="relative" ref={ref}>
-            <button onClick={() => setIsOpen(!isOpen)} className="text-gray-500 hover:text-gray-800 p-1 rounded-full">
+            <button onClick={() => setIsOpen(!isOpen)} className="text-muted-foreground hover:text-foreground p-1 rounded-full">
                 <MoreVerticalIcon className="w-5 h-5" />
             </button>
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                    <ul className="py-1 text-sm text-gray-700">
-                        <li><Link to={`/orders/view/${order.orderId}`} className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"> <ViewIcon className="w-4 h-4" /> View</Link></li>
-                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"> <DownloadIcon className="w-4 h-4" /> Download Invoice</a></li>
-                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"> <DownloadIcon className="w-4 h-4" /> Download Label</a></li>
-                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"> <ExternalLinkIcon className="w-4 h-4" /> Track Order</a></li>
+                <div className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-lg z-10 border border-border">
+                    <ul className="py-1 text-sm text-card-foreground">
+                        <li><Link to={`/orders/view/${order.orderId}`} className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <ViewIcon className="w-4 h-4" /> View</Link></li>
+                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <DownloadIcon className="w-4 h-4" /> Download Invoice</a></li>
+                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <DownloadIcon className="w-4 h-4" /> Download Label</a></li>
+                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <ExternalLinkIcon className="w-4 h-4" /> Track Order</a></li>
                         {order.status === 'CONFIRMED' && (
-                             <li><button onClick={handleCancel} className="flex items-center gap-2 w-full text-left px-4 py-2 text-error-main hover:bg-gray-100"> <TrashIcon className="w-4 h-4" /> Cancel Order</button></li>
+                             <li><button onClick={handleCancel} className="flex items-center gap-2 w-full text-left px-4 py-2 text-error-main hover:bg-muted"> <TrashIcon className="w-4 h-4" /> Cancel Order</button></li>
                         )}
                     </ul>
                 </div>
@@ -118,11 +118,11 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
 
     return (
         <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-600 responsive-table">
-                <thead className="bg-gray-50 text-xs text-gray-700 uppercase">
+            <table className="min-w-full text-sm text-left text-muted-foreground responsive-table">
+                <thead className="bg-muted text-xs text-muted-foreground uppercase">
                     <tr>
                         {columnVisibility.selection && <th scope="col" className="p-4">
-                            <input type="checkbox" onChange={toggleAllRows} checked={isAllSelected} className="rounded border-gray-300 text-primary-main focus:ring-primary-main"/>
+                            <input type="checkbox" onChange={toggleAllRows} checked={isAllSelected} className="bg-card rounded border-border text-primary-main focus:ring-primary-main"/>
                         </th>}
                         {columnVisibility.srNo && <TableHeader id="srNo" label="Sr. No." isSortable={false} sorting={sorting} setSorting={setSorting}/>}
                         {columnVisibility.awbNumber && <TableHeader id="awbNumber" label="Document Number" isSortable={true} sorting={sorting} setSorting={setSorting} className="min-w-[180px]"/>}
@@ -139,35 +139,35 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
                 <tbody>
                     {isLoading ? (
                         Array.from({ length: 10 }).map((_, i) => (
-                            <tr key={i} className="bg-white border-b">
+                            <tr key={i} className="bg-card border-b border-border">
                                 <td colSpan={visibleColumnCount} className="p-4">
                                     <div className="space-y-2">
-                                        <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
-                                        <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                                        <div className="h-4 bg-muted rounded animate-pulse w-full"></div>
+                                        <div className="h-4 bg-muted rounded animate-pulse w-5/6"></div>
                                     </div>
                                 </td>
                             </tr>
                         ))
                     ) : orders.length === 0 ? (
                         <tr>
-                            <td colSpan={visibleColumnCount} className="text-center py-10 text-gray-500">
+                            <td colSpan={visibleColumnCount} className="text-center py-10 text-muted-foreground">
                                 No orders found.
                             </td>
                         </tr>
                     ) : (
                         orders.map((order, index) => (
-                            <tr key={order.id} className="bg-white border-b hover:bg-gray-50">
+                            <tr key={order.id} className="bg-card border-b border-border hover:bg-muted">
                                 {columnVisibility.selection && <td className="p-4" data-label="">
                                     <input
                                         type="checkbox"
                                         checked={!!selectedRowIds[order.id]}
                                         onChange={() => toggleRow(order.id)}
                                         disabled={order.status !== 'CONFIRMED'}
-                                        className="rounded border-gray-300 text-primary-main focus:ring-primary-main disabled:bg-gray-200"
+                                        className="bg-card rounded border-border text-primary-main focus:ring-primary-main disabled:bg-muted"
                                     />
                                 </td>}
-                                {columnVisibility.srNo && <td data-label="Sr. No." className="px-4 py-3 text-gray-500">{pageStart + index + 1}</td>}
-                                {columnVisibility.awbNumber && <td data-label="Document Number" className="px-4 py-3 font-medium text-gray-900">
+                                {columnVisibility.srNo && <td data-label="Sr. No." className="px-4 py-3">{pageStart + index + 1}</td>}
+                                {columnVisibility.awbNumber && <td data-label="Document Number" className="px-4 py-3 font-medium text-foreground">
                                     <div className="flex items-center gap-2">
                                         {order.parcelCategory === 'INTERNATIONAL' && <PlaneIcon className="w-4 h-4 text-primary-main" />}
                                         {order.awbNumber}
@@ -177,8 +177,8 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
                                 {columnVisibility.destinationPincode && <td data-label="Destination" className="px-4 py-3">{order.destinationPincode}</td>}
                                 {columnVisibility.deliveryPromise && <td data-label="Service Type" className="px-4 py-3">{order.deliveryPromise}</td>}
                                 {columnVisibility.weight && <td data-label="Weight / LBH" className="px-4 py-3">
-                                    <div>{order.weight}</div>
-                                    <div className="text-xs text-gray-400">{order.lbh}</div>
+                                    <div className="text-foreground">{order.weight}</div>
+                                    <div className="text-xs text-muted-foreground">{order.lbh}</div>
                                 </td>}
                                 {columnVisibility.bookingDate && <td data-label="Date" className="px-4 py-3">{new Date(order.bookingDate).toLocaleDateString()}</td>}
                                 {columnVisibility.paymentMode && <td data-label="Payment Mode" className="px-4 py-3">{order.paymentMode}</td>}

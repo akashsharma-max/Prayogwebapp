@@ -28,16 +28,16 @@ interface TopSubTenantsTableProps {
 
 const TopSubTenantsTable: React.FC<TopSubTenantsTableProps> = ({ tenants, isLoading, onRefresh }) => {
     return (
-        <div className="p-6 bg-white rounded-lg shadow-sm h-full">
+        <div className="p-6 bg-card rounded-lg shadow-sm h-full border border-border">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-800">Top Sub-Tenants</h3>
-                <button onClick={onRefresh} className="text-gray-400 hover:text-gray-600">
+                <h3 className="text-lg font-bold text-foreground">Top Sub-Tenants</h3>
+                <button onClick={onRefresh} className="text-muted-foreground hover:text-foreground">
                     <RefreshIcon className={`w-5 h-5 ${isLoading ? 'animate-rotate' : ''}`} />
                 </button>
             </div>
             <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-sm text-left text-gray-500">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                <table className="w-full text-sm text-left text-muted-foreground">
+                    <thead className="text-xs text-foreground uppercase bg-muted">
                         <tr>
                             <th scope="col" className="px-6 py-3">Name</th>
                             <th scope="col" className="px-6 py-3">Owner Name</th>
@@ -48,8 +48,8 @@ const TopSubTenantsTable: React.FC<TopSubTenantsTableProps> = ({ tenants, isLoad
                     </thead>
                     <tbody>
                         {tenants.map((tenant) => (
-                            <tr key={tenant.id} className="bg-white border-b hover:bg-gray-50">
-                                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap flex items-center">
+                            <tr key={tenant.id} className="bg-card border-b border-border hover:bg-muted">
+                                <th scope="row" className="px-6 py-4 font-medium text-foreground whitespace-nowrap flex items-center">
                                     <img src={tenant.avatarUrl} alt={tenant.name} className="w-8 h-8 rounded-full mr-3" />
                                     {tenant.name}
                                 </th>
@@ -59,7 +59,7 @@ const TopSubTenantsTable: React.FC<TopSubTenantsTableProps> = ({ tenants, isLoad
                                     <ProfitLoss value={tenant.profit} />
                                 </td>
                                 <td className="px-1 py-4 text-center">
-                                    <button className="text-gray-500 hover:text-gray-800">
+                                    <button className="text-muted-foreground hover:text-foreground">
                                         <MoreIcon />
                                     </button>
                                 </td>

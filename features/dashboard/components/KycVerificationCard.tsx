@@ -2,10 +2,10 @@ import React from 'react';
 import { KycDetails, KycStatus } from '../../../types';
 
 const statusConfig: Record<KycStatus, { text: string; bg: string; }> = {
-    'Completed': { text: 'text-success-darker', bg: 'bg-success-lighter' },
-    'Pending': { text: 'text-warning-darker', bg: 'bg-warning-lighter' },
-    'Not Started': { text: 'text-warning-darker', bg: 'bg-warning-lighter' },
-    'Rejected': { text: 'text-error-darker', bg: 'bg-error-lighter' },
+    'Completed': { text: 'text-success-darker dark:text-success-light', bg: 'bg-success-lighter dark:bg-success-darker' },
+    'Pending': { text: 'text-warning-darker dark:text-warning-light', bg: 'bg-warning-lighter dark:bg-warning-darker' },
+    'Not Started': { text: 'text-warning-darker dark:text-warning-light', bg: 'bg-warning-lighter dark:bg-warning-darker' },
+    'Rejected': { text: 'text-error-darker dark:text-error-light', bg: 'bg-error-lighter dark:bg-error-darker' },
 };
 
 interface KycVerificationCardProps {
@@ -17,21 +17,16 @@ const KycVerificationCard: React.FC<KycVerificationCardProps> = ({ kycDetails })
     const config = statusConfig[status];
 
     return (
-        <div className="relative p-6 bg-white rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
-            <img 
-                src="https://www.tmf-group.com/-/media/images/backgrounds/insights/2022/tmf-insight-background-kyc-blue-1920x1080.jpg"
-                alt="KYC Background"
-                className="absolute top-0 left-0 w-full h-full object-cover opacity-10"
-            />
+        <div className="relative p-6 bg-card rounded-lg shadow-sm overflow-hidden h-full flex flex-col border border-border">
             <div className="relative z-10 flex-grow flex flex-col">
                 <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-bold text-gray-800">KYC Verification</h3>
+                    <h3 className="text-lg font-bold text-foreground">KYC Verification</h3>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${config.bg} ${config.text}`}>
                         {status}
                     </span>
                 </div>
                 {status !== 'Not Started' && documentType && (
-                     <p className="text-sm text-gray-600 mt-2">
+                     <p className="text-sm text-muted-foreground mt-2">
                         {documentType}: {documentNumber}
                     </p>
                 )}

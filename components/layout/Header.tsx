@@ -2,6 +2,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggleButton from '../ThemeToggleButton';
 
 const MenuIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M3 4h18v2H3V4Zm0 7h18v2H3v-2Zm0 7h18v2H3v-2Z"></path></svg>
@@ -21,7 +22,7 @@ const Breadcrumbs: React.FC = () => {
         <nav className="flex items-center text-sm" aria-label="Breadcrumb">
             <ol className="inline-flex items-center space-x-1 md:space-x-2">
                 <li className="inline-flex items-center">
-                    <Link to="/" className="inline-flex items-center text-gray-500 hover:text-primary-main">
+                    <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-primary-main">
                         Home
                     </Link>
                 </li>
@@ -36,7 +37,7 @@ const Breadcrumbs: React.FC = () => {
                                 <ChevronRightIcon className="text-gray-400" />
                                 <Link
                                     to={to}
-                                    className={`ml-1 md:ml-2 font-medium ${isLast ? 'text-gray-800' : 'text-gray-500 hover:text-primary-main'}`}
+                                    className={`ml-1 md:ml-2 font-medium ${isLast ? 'text-foreground' : 'text-muted-foreground hover:text-primary-main'}`}
                                 >
                                     {name}
                                 </Link>
@@ -58,19 +59,20 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar, onToggleDesktopSidebar, isSidebarCollapsed }) => {
     const { logout } = useAuth();
     return (
-        <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-white border-b-2 border-gray-200">
+        <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-card border-b-2 border-border">
             <div className="flex items-center">
-                <button onClick={onToggleMobileSidebar} className="text-gray-500 focus:outline-none lg:hidden">
+                <button onClick={onToggleMobileSidebar} className="text-muted-foreground focus:outline-none lg:hidden">
                    <MenuIcon className="w-6 h-6" />
                 </button>
-                <button onClick={onToggleDesktopSidebar} className="text-gray-500 focus:outline-none hidden lg:block mr-4">
+                <button onClick={onToggleDesktopSidebar} className="text-muted-foreground focus:outline-none hidden lg:block mr-4">
                    <MenuIcon className="w-6 h-6" />
                 </button>
                 <div className="hidden lg:block">
                   <Breadcrumbs />
                 </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
+                <ThemeToggleButton />
                 <button
                   onClick={logout}
                   className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors"
