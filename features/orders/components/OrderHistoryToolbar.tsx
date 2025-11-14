@@ -8,6 +8,8 @@ type Filters = {
     deliveryPromise: string;
     paymentMode: string;
     orderStatus: OrderStatus[];
+    startDate: string;
+    endDate: string;
 };
 
 interface OrderHistoryToolbarProps {
@@ -48,7 +50,7 @@ const FilterPopover: React.FC<{
     };
 
     const handleClear = () => {
-        const clearedFilters = { awbNumber: '', deliveryPromise: '', paymentMode: '', orderStatus: [] };
+        const clearedFilters = { awbNumber: '', deliveryPromise: '', paymentMode: '', orderStatus: [], startDate: '', endDate: '' };
         setLocalFilters(clearedFilters);
         onFiltersChange(clearedFilters);
         onClose();
@@ -61,6 +63,16 @@ const FilterPopover: React.FC<{
                 <div>
                     <label className="text-xs font-medium text-muted-foreground">Document Number</label>
                     <input type="text" value={localFilters.awbNumber} onChange={e => setLocalFilters(f => ({...f, awbNumber: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-border rounded-md text-sm bg-input focus:outline-none focus:ring-primary-main"/>
+                </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-xs font-medium text-muted-foreground">Start Date</label>
+                        <input type="date" value={localFilters.startDate} onChange={e => setLocalFilters(f => ({...f, startDate: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-border rounded-md text-sm bg-input focus:outline-none focus:ring-primary-main"/>
+                    </div>
+                     <div>
+                        <label className="text-xs font-medium text-muted-foreground">End Date</label>
+                        <input type="date" value={localFilters.endDate} onChange={e => setLocalFilters(f => ({...f, endDate: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-border rounded-md text-sm bg-input focus:outline-none focus:ring-primary-main"/>
+                    </div>
                 </div>
                  <div>
                     <label className="text-xs font-medium text-muted-foreground">Service Type</label>
@@ -121,7 +133,7 @@ const OrderHistoryToolbar: React.FC<OrderHistoryToolbarProps> = ({ searchQuery, 
     };
 
     const areFiltersActive = useMemo(() => {
-        return filters.awbNumber || filters.deliveryPromise || filters.paymentMode || filters.orderStatus.length > 0;
+        return filters.awbNumber || filters.deliveryPromise || filters.paymentMode || filters.orderStatus.length > 0 || filters.startDate || filters.endDate;
     }, [filters]);
 
     const toggleableColumns = allColumns.filter(c => c.id !== 'selection' && c.id !== 'actions');

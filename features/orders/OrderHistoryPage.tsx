@@ -13,6 +13,8 @@ type Filters = {
     deliveryPromise: string;
     paymentMode: string;
     orderStatus: OrderStatus[];
+    startDate: string;
+    endDate: string;
 };
 
 type State = {
@@ -51,6 +53,8 @@ const initialState: State = {
         deliveryPromise: '',
         paymentMode: '',
         orderStatus: [],
+        startDate: '',
+        endDate: '',
     },
     selectedRowIds: {},
 };
@@ -162,6 +166,8 @@ const OrderHistoryPage: React.FC = () => {
             if (state.filters.deliveryPromise) params.append('deliveryPromise', state.filters.deliveryPromise);
             if (state.filters.paymentMode) params.append('paymentMode', state.filters.paymentMode);
             if (state.filters.orderStatus.length > 0) params.append('orderStatus', state.filters.orderStatus.join(','));
+            if (state.filters.startDate) params.append('startDate', state.filters.startDate);
+            if (state.filters.endDate) params.append('endDate', state.filters.endDate);
 
 
             const data = await apiClient.get('/gateway/booking-service/orders', params);

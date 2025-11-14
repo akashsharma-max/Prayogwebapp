@@ -1,8 +1,11 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { OrderEntity } from '../../../types';
-import { PlaneIcon, MoreVerticalIcon, DownloadIcon, TrashIcon, ExternalLinkIcon, ViewIcon } from '../../../components/icons';
+import { PlaneIcon, MoreVerticalIcon, DownloadIcon, TrashIcon, ExternalLinkIcon, ViewIcon, RefreshIcon } from '../../../components/icons';
 import OrderStatusBadge from './OrderStatusBadge';
+import { useToast } from '../../../App';
+import apiClient, { ApiError } from '../../../lib/apiClient';
 
 interface OrderHistoryTableProps {
     orders: OrderEntity[];
@@ -51,6 +54,9 @@ const TableHeader: React.FC<{
 const RowActions: React.FC<{ order: OrderEntity }> = ({ order }) => {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const { addToast } = useToast();
+    const [isDownloadingLabel, setIsDownloadingLabel] = useState(false);
+    const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -69,6 +75,64 @@ const RowActions: React.FC<{ order: OrderEntity }> = ({ order }) => {
         setIsOpen(false);
     };
 
+    const handleDownloadInvoice = async () => {
+        setIsDownloadingInvoice(true);
+        setIsOpen(false);
+        try {
+            const response = await apiClient.get(`/gateway/pdf-generator/invoice/${order.orderId}`);
+            if (response.status === 'success' && response.data?.invoiceUrl) {
+                const invoiceUrl = response.data.invoiceUrl;
+                
+                const link = document.createElement('a');
+                link.href = invoiceUrl;
+                link.target = '_blank';
+                link.download = `invoice-${order.orderId}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                addToast('Invoice download started.', 'success');
+            } else {
+                throw new Error(response.message || 'Failed to generate invoice.');
+            }
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : "An error occurred while downloading the invoice.";
+            addToast(errorMessage, 'error');
+            console.error("Download Invoice Error:", error);
+        } finally {
+            setIsDownloadingInvoice(false);
+        }
+    };
+
+    const handleDownloadLabel = async () => {
+        setIsDownloadingLabel(true);
+        setIsOpen(false);
+        try {
+            const response = await apiClient.get(`/gateway/pdf-generator/shipping-label/${order.orderId}`);
+            if (response.status === 'success' && response.data?.shippingLabelUrl) {
+                const labelUrl = response.data.shippingLabelUrl;
+                
+                const link = document.createElement('a');
+                link.href = labelUrl;
+                link.target = '_blank';
+                link.download = `shipping-label-${order.orderId}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                addToast('Shipping label download started.', 'success');
+            } else {
+                throw new Error(response.message || 'Failed to generate shipping label.');
+            }
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : "An error occurred while downloading the label.";
+            addToast(errorMessage, 'error');
+            console.error("Download Label Error:", error);
+        } finally {
+            setIsDownloadingLabel(false);
+        }
+    };
+
     return (
         <div className="relative" ref={ref}>
             <button onClick={() => setIsOpen(!isOpen)} className="text-muted-foreground hover:text-foreground p-1 rounded-full">
@@ -78,8 +142,44 @@ const RowActions: React.FC<{ order: OrderEntity }> = ({ order }) => {
                 <div className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-lg z-10 border border-border">
                     <ul className="py-1 text-sm text-card-foreground">
                         <li><Link to={`/orders/view/${order.orderId}`} className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <ViewIcon className="w-4 h-4" /> View</Link></li>
-                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <DownloadIcon className="w-4 h-4" /> Download Invoice</a></li>
-                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <DownloadIcon className="w-4 h-4" /> Download Label</a></li>
+                        <li>
+                            <button 
+                                onClick={handleDownloadInvoice}
+                                disabled={isDownloadingInvoice}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-muted disabled:opacity-50 disabled:cursor-wait"
+                            >
+                                {isDownloadingInvoice ? (
+                                    <>
+                                        <RefreshIcon className="w-4 h-4 animate-rotate" />
+                                        <span>Downloading...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <DownloadIcon className="w-4 h-4" />
+                                        <span>Download Invoice</span>
+                                    </>
+                                )}
+                            </button>
+                        </li>
+                        <li>
+                            <button 
+                                onClick={handleDownloadLabel}
+                                disabled={isDownloadingLabel}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-muted disabled:opacity-50 disabled:cursor-wait"
+                            >
+                                {isDownloadingLabel ? (
+                                    <>
+                                        <RefreshIcon className="w-4 h-4 animate-rotate" />
+                                        <span>Downloading...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <DownloadIcon className="w-4 h-4" />
+                                        <span>Download Label</span>
+                                    </>
+                                )}
+                            </button>
+                        </li>
                         <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <ExternalLinkIcon className="w-4 h-4" /> Track Order</a></li>
                         {order.status === 'CONFIRMED' && (
                              <li><button onClick={handleCancel} className="flex items-center gap-2 w-full text-left px-4 py-2 text-error-main hover:bg-muted"> <TrashIcon className="w-4 h-4" /> Cancel Order</button></li>

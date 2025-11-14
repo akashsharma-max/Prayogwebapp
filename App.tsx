@@ -1,4 +1,6 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
+
+
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import SettingsLayout from './components/layout/SettingsLayout';
@@ -11,7 +13,38 @@ import { mainNav, settingsNav } from './navigation';
 import RateCardsPage from './features/rate-cards/RateCardsPage';
 import OrderHistoryPage from './features/orders/OrderHistoryPage';
 import OrderDetailsPage from './features/orders/OrderDetailsPage';
-import { XCircleIcon } from './components/icons';
+import { XCircleIcon, CheckCircleIcon } from './components/icons';
+import loadingSpinner from './lib/loadingSpinner';
+
+
+// --- START GLOBAL SPINNER ---
+const GlobalSpinner: React.FC = () => {
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const listener = (loading: boolean) => {
+            setIsLoading(loading);
+        };
+
+        loadingSpinner.subscribe(listener);
+
+        return () => {
+            loadingSpinner.unsubscribe(listener);
+        };
+    }, []);
+
+    if (!isLoading) {
+        return null;
+    }
+    
+    return (
+        <div className="fixed top-0 left-0 w-full h-1 z-[200] overflow-hidden bg-primary-lighter">
+            <div className="h-full bg-primary-main w-full origin-left-right animate-indeterminate-progress"></div>
+        </div>
+    );
+};
+// --- END GLOBAL SPINNER ---
+
 
 // --- START TOAST NOTIFICATION SYSTEM ---
 interface ToastContextType {
@@ -42,7 +75,7 @@ const Toast: React.FC<{ toast: ToastMessage; onClose: (id: number) => void; }> =
       success: {
           bg: 'bg-success-lighter',
           text: 'text-success-darker',
-          icon: <div/> // Placeholder for success icon
+          icon: <CheckCircleIcon className="w-6 h-6 text-success-main" />
       }
   };
 
@@ -130,6 +163,7 @@ const generateRoutes = (navConfig: NavItem[]): React.ReactNode[] => {
 const App: React.FC = () => {
   return (
     <ToastProvider>
+        <GlobalSpinner />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>

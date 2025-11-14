@@ -1,3 +1,4 @@
+import loadingSpinner from './loadingSpinner';
 
 const API_BASE_URL = 'https://sandbox-apis.prayog.io';
 
@@ -45,31 +46,41 @@ const handleResponse = async (response: Response) => {
 
 const apiClient = {
     get: async (endpoint: string, params?: URLSearchParams) => {
-        const url = new URL(`${API_BASE_URL}${endpoint}`);
-        if (params) {
-            url.search = params.toString();
+        loadingSpinner.show();
+        try {
+            const url = new URL(`${API_BASE_URL}${endpoint}`);
+            if (params) {
+                url.search = params.toString();
+            }
+            
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json',
+                },
+            });
+            return await handleResponse(response);
+        } finally {
+            loadingSpinner.hide();
         }
-        
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                ...getAuthHeaders(),
-                'Content-Type': 'application/json',
-            },
-        });
-        return handleResponse(response);
     },
 
     post: async (endpoint: string, body: any) => {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-                ...getAuthHeaders(),
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-        return handleResponse(response);
+        loadingSpinner.show();
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            });
+            return await handleResponse(response);
+        } finally {
+            loadingSpinner.hide();
+        }
     },
 };
 
