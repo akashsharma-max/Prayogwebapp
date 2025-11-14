@@ -1,8 +1,9 @@
 
-import React, { useState, useMemo, ReactNode, useEffect } from 'react';
-import { TruckIcon, BoxIcon, DocumentTextIcon, CurrencyDollarIcon, PlusCircleIcon, MinusCircleIcon } from '../../components/icons';
+
+import React, { useState, useMemo, ReactNode, useEffect, useCallback } from 'react';
+import { TruckIcon, BoxIcon, DocumentTextIcon, CurrencyDollarIcon, PlusCircleIcon, MinusCircleIcon, RefreshIcon } from '../../components/icons';
 import { useToast } from '../../App';
-import apiClient from '../../lib/apiClient';
+import apiClient, { ApiError } from '../../lib/apiClient';
 
 const SectionCard: React.FC<{ icon: React.ElementType, title: string, children: ReactNode, className?: string }> = ({ icon: Icon, title, children, className }) => (
     <div className={`bg-card rounded-lg shadow-sm border border-border ${className}`}>
@@ -38,6 +39,30 @@ interface FormState {
     ewayBill: string; remarks: string;
 }
 type FormErrors = { [K in keyof FormState]?: string | any };
+
+interface RateDetails {
+    baseRate: number;
+    totalAmount: number;
+    charges: { chargeName: string; amount: number; }[];
+    weightCalculation: { finalWeight: number; };
+}
+
+// Debounce utility
+function debounce<F extends (...args: any[]) => any>(func: F, wait: number): (...args: Parameters<F>) => void {
+    // FIX: Use ReturnType<typeof setTimeout> for the timeout ID to be compatible with browser environments.
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    return function executedFunction(...args: Parameters<F>) {
+        const later = () => {
+            timeout = null;
+            func(...args);
+        };
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        timeout = setTimeout(later, wait);
+    };
+}
+
 
 const initialProduct: Product = { id: Date.now(), type: '', name: '', value: '', quantity: '1' };
 const initialShipment: Shipment = { id: Date.now(), weight: '', length: '', breadth: '', height: '' };
@@ -138,6 +163,8 @@ const CreateOrderPage: React.FC = () => {
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     const [serviceTypes, setServiceTypes] = useState<string[]>([]);
     const [isServiceLoading, setIsServiceLoading] = useState(true);
+    const [rateDetails, setRateDetails] = useState<RateDetails | null>(null);
+    const [isCalculatingRate, setIsCalculatingRate] = useState(false);
     const { addToast } = useToast();
 
     useEffect(() => {
@@ -174,6 +201,81 @@ const CreateOrderPage: React.FC = () => {
         fetchServiceTypes();
     }, [addToast]);
     
+    const calculateRates = useCallback(async (currentFormData: FormState) => {
+        const firstShipment = currentFormData.shipments[0];
+        setIsCalculatingRate(true);
+        setRateDetails(null);
+        try {
+            const payload = {
+                fromPincode: parseInt(currentFormData.senderPincode, 10),
+                toPincode: parseInt(currentFormData.receiverPincode, 10),
+                serviceType: currentFormData.serviceType,
+                weight: Math.round((parseFloat(firstShipment.weight) || 0) * 1000), // kg to g
+                length: parseFloat(firstShipment.length) || 0,
+                height: parseFloat(firstShipment.height) || 0,
+                width: parseFloat(firstShipment.breadth) || 0, // form 'breadth' to api 'width'
+                includeDefaultCharges: false,
+                userOptions: {
+                    insurance: {
+                        enabled: currentFormData.insurance,
+                        amount: currentFormData.products.reduce((total, p) => {
+                            const value = parseFloat(p.value) || 0;
+                            const quantity = parseInt(p.quantity, 10) || 0;
+                            return total + (value * quantity);
+                        }, 0)
+                    },
+                    cod: currentFormData.cod
+                }
+            };
+            
+            const response = await apiClient.post('/gateway/ure/api/external/rate-calculation/calculate', payload);
+            if (response.status === 'success' && response.data) {
+                setRateDetails(response.data);
+            } else {
+                throw new Error(response.message || 'Failed to calculate rates.');
+            }
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : "Rate calculation failed.";
+            addToast(errorMessage, 'error');
+            console.error('Rate calculation error:', error);
+            setRateDetails(null);
+        } finally {
+            setIsCalculatingRate(false);
+        }
+    }, [addToast]);
+
+    const debouncedCalculateRates = useMemo(() => debounce(calculateRates, 700), [calculateRates]);
+
+    useEffect(() => {
+        const firstShipment = formData.shipments[0];
+        const isReadyForCalculation =
+            /^[0-9]{6}$/.test(formData.senderPincode) &&
+            /^[0-9]{6}$/.test(formData.receiverPincode) &&
+            formData.serviceType &&
+            firstShipment &&
+            !isNaN(parseFloat(firstShipment.weight)) && parseFloat(firstShipment.weight) > 0 &&
+            !isNaN(parseFloat(firstShipment.length)) && parseFloat(firstShipment.length) > 0 &&
+            !isNaN(parseFloat(firstShipment.breadth)) && parseFloat(firstShipment.breadth) > 0 &&
+            !isNaN(parseFloat(firstShipment.height)) && parseFloat(firstShipment.height) > 0;
+
+        if (isReadyForCalculation) {
+            debouncedCalculateRates(formData);
+        } else {
+            setRateDetails(null);
+        }
+    }, [
+        formData.senderPincode,
+        formData.receiverPincode,
+        formData.serviceType,
+        formData.shipments,
+        formData.products,
+        formData.insurance,
+        formData.cod,
+        debouncedCalculateRates,
+        formData
+    ]);
+
+
     const errors = useMemo(() => getValidationErrors(formData), [formData]);
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -207,34 +309,6 @@ const CreateOrderPage: React.FC = () => {
         }
         return 0;
     };
-
-    const paymentDetails = useMemo(() => {
-        const chargeableWeight = formData.shipments.reduce((total, shipment) => {
-            const physicalWeight = parseFloat(shipment.weight) || 0;
-            const volumetricWeight = calculateVolumetricWeight(shipment);
-            return total + Math.max(physicalWeight, volumetricWeight);
-        }, 0);
-
-        const hasValues = chargeableWeight > 0;
-        
-        const base = hasValues ? 50.00 : 0;
-        const volumetric = hasValues ? 15.00 : 0;
-        const cod = formData.cod && hasValues ? 20.00 : 0;
-        const insurance = formData.insurance && hasValues ? 10.00 : 0;
-        const subtotal = base + volumetric + cod + insurance;
-        const gst = subtotal * 0.18;
-        const total = subtotal + gst;
-
-        return {
-            chargeableWeight: `${chargeableWeight.toFixed(2)} kg`,
-            base: `₹ ${base.toFixed(2)}`,
-            volumetric: `₹ ${volumetric.toFixed(2)}`,
-            cod: `₹ ${cod.toFixed(2)}`,
-            insurance: `₹ ${insurance.toFixed(2)}`,
-            gst: `₹ ${gst.toFixed(2)}`,
-            total: `₹ ${total.toFixed(2)}`
-        };
-    }, [formData.shipments, formData.cod, formData.insurance]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -424,30 +498,38 @@ const CreateOrderPage: React.FC = () => {
                 <div className="lg:col-span-1">
                     <div className="lg:sticky top-6">
                         <SectionCard icon={CurrencyDollarIcon} title="Payment Summary">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Chargeable Weight</span>
-                                    <span>{paymentDetails.chargeableWeight}</span>
+                            {isCalculatingRate ? (
+                                <div className="flex flex-col items-center justify-center h-48">
+                                    <RefreshIcon className="w-8 h-8 text-primary-main animate-rotate" />
+                                    <p className="mt-2 text-muted-foreground">Calculating Rates...</p>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Base Shipping Charges</span>
-                                    <span>{paymentDetails.base}</span>
+                            ) : rateDetails ? (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Chargeable Weight</span>
+                                        <span className="font-medium">{(rateDetails.weightCalculation.finalWeight / 1000).toFixed(2)} kg</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Base Rate</span>
+                                        <span>₹{rateDetails.baseRate.toFixed(2)}</span>
+                                    </div>
+                                    {rateDetails.charges.map((charge, index) => (
+                                        <div key={index} className="flex justify-between">
+                                            <span className="text-muted-foreground">{charge.chargeName}</span>
+                                            <span>₹{charge.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-border">
+                                        <span className="text-foreground">Total Amount</span>
+                                        <span className="text-primary-main">₹{rateDetails.totalAmount.toFixed(2)}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Volumetric Weight Charges</span>
-                                    <span>{paymentDetails.volumetric}</span>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-10 h-48 flex items-center justify-center">
+                                    <p>Please fill sender, receiver, and shipment details to see the price.</p>
                                 </div>
-                                {formData.cod && <div className="flex justify-between"><span className="text-muted-foreground">COD Charges</span><span>{paymentDetails.cod}</span></div>}
-                                {formData.insurance && <div className="flex justify-between"><span className="text-muted-foreground">Insurance Charges</span><span>{paymentDetails.insurance}</span></div>}
-                                <div className="flex justify-between pt-2 border-t border-border">
-                                    <span className="text-muted-foreground">GST (18%)</span>
-                                    <span>{paymentDetails.gst}</span>
-                                </div>
-                                <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-border">
-                                    <span className="text-foreground">Total Amount</span>
-                                    <span className="text-primary-main">{paymentDetails.total}</span>
-                                </div>
-                            </div>
+                            )}
+
                             <div className="mt-6">
                                 <button type="submit" className="w-full px-6 py-3 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed">
                                     Create Order
