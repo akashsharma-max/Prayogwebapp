@@ -100,12 +100,6 @@ const LoginPage: React.FC = () => {
               {error}
             </div>
           )}
-
-           <div className="flex items-center justify-between">
-             <p className="text-sm text-muted-foreground">
-                Use <code className="bg-muted p-1 rounded">admin@prayog.com</code> and <code className="bg-muted p-1 rounded">password</code>
-             </p>
-           </div>
           
           <div>
             <button
