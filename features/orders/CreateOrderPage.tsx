@@ -1,7 +1,7 @@
 
-
 import React, { useState, useMemo, ReactNode, useEffect, useCallback } from 'react';
-import { TruckIcon, BoxIcon, DocumentTextIcon, CurrencyDollarIcon, PlusCircleIcon, MinusCircleIcon, RefreshIcon } from '../../components/icons';
+import { useNavigate } from 'react-router-dom';
+import { TruckIcon, BoxIcon, DocumentTextIcon, CurrencyDollarIcon, PlusCircleIcon, MinusCircleIcon, RefreshIcon, CheckCircleIcon, XCircleIcon } from '../../components/icons';
 import { useToast } from '../../App';
 import apiClient, { ApiError } from '../../lib/apiClient';
 
@@ -47,9 +47,13 @@ interface RateDetails {
     weightCalculation: { finalWeight: number; };
 }
 
+interface PincodeDetails {
+    from: { city: string; state: string; country: string; };
+    to: { city: string; state: string; country: string; };
+}
+
 // Debounce utility
 function debounce<F extends (...args: any[]) => any>(func: F, wait: number): (...args: Parameters<F>) => void {
-    // FIX: Use ReturnType<typeof setTimeout> for the timeout ID to be compatible with browser environments.
     let timeout: ReturnType<typeof setTimeout> | null = null;
     return function executedFunction(...args: Parameters<F>) {
         const later = () => {
@@ -151,6 +155,7 @@ const formatMatrixKey = (key: string) => {
 
 
 const CreateOrderPage: React.FC = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState<FormState>({
         senderName: '', senderPhone: '', senderAddress: '', senderPincode: '', senderGst: '', senderEmail: '',
         receiverName: '', receiverPhone: '', receiverAddress: '', receiverPincode: '', receiverEmail: '',
@@ -165,6 +170,12 @@ const CreateOrderPage: React.FC = () => {
     const [isServiceLoading, setIsServiceLoading] = useState(true);
     const [rateDetails, setRateDetails] = useState<RateDetails | null>(null);
     const [isCalculatingRate, setIsCalculatingRate] = useState(false);
+    const [pincodeDetails, setPincodeDetails] = useState<PincodeDetails | null>(null);
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [serviceability, setServiceability] = useState<{
+        status: 'idle' | 'loading' | 'success' | 'error';
+        message: string | null;
+    }>({ status: 'idle', message: null });
     const { addToast } = useToast();
 
     useEffect(() => {
@@ -205,6 +216,7 @@ const CreateOrderPage: React.FC = () => {
         const firstShipment = currentFormData.shipments[0];
         setIsCalculatingRate(true);
         setRateDetails(null);
+        setPincodeDetails(null);
         try {
             const payload = {
                 fromPincode: parseInt(currentFormData.senderPincode, 10),
@@ -231,6 +243,7 @@ const CreateOrderPage: React.FC = () => {
             const response = await apiClient.post('/gateway/ure/api/external/rate-calculation/calculate', payload);
             if (response.status === 'success' && response.data) {
                 setRateDetails(response.data);
+                setPincodeDetails(response.data.pincodeDetails);
             } else {
                 throw new Error(response.message || 'Failed to calculate rates.');
             }
@@ -239,6 +252,7 @@ const CreateOrderPage: React.FC = () => {
             addToast(errorMessage, 'error');
             console.error('Rate calculation error:', error);
             setRateDetails(null);
+            setPincodeDetails(null);
         } finally {
             setIsCalculatingRate(false);
         }
@@ -246,11 +260,50 @@ const CreateOrderPage: React.FC = () => {
 
     const debouncedCalculateRates = useMemo(() => debounce(calculateRates, 700), [calculateRates]);
 
+    const checkServiceability = useCallback(async (senderPincode: string, receiverPincode: string) => {
+        setServiceability({ status: 'loading', message: null });
+        try {
+            const payload = {
+                source_postal_code: senderPincode,
+                destination_postal_code: receiverPincode,
+                parcel_category: 'courier',
+            };
+            const response = await apiClient.post('/serviceability/v2/check', payload);
+    
+            const hasPartners = response?.success && Array.isArray(response.partners) && response.partners.length > 0;
+    
+            if (hasPartners) {
+                addToast('Pincodes are serviceable.', 'success');
+                setServiceability({ status: 'success', message: null });
+            } else {
+                setServiceability({ status: 'error', message: 'This pincode combination is not serviceable.' });
+            }
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : "Failed to check pincode serviceability.";
+            setServiceability({ status: 'error', message: errorMessage });
+            console.error('Serviceability check error:', error);
+        }
+    }, [addToast]);
+    
+    const debouncedCheckServiceability = useMemo(() => debounce(checkServiceability, 500), [checkServiceability]);
+    
+    useEffect(() => {
+        const senderPincodeValid = /^[0-9]{6}$/.test(formData.senderPincode);
+        const receiverPincodeValid = /^[0-9]{6}$/.test(formData.receiverPincode);
+
+        if (senderPincodeValid && receiverPincodeValid) {
+            debouncedCheckServiceability(formData.senderPincode, formData.receiverPincode);
+        } else {
+            setServiceability({ status: 'idle', message: null });
+        }
+    }, [formData.senderPincode, formData.receiverPincode, debouncedCheckServiceability]);
+
     useEffect(() => {
         const firstShipment = formData.shipments[0];
         const isReadyForCalculation =
             /^[0-9]{6}$/.test(formData.senderPincode) &&
             /^[0-9]{6}$/.test(formData.receiverPincode) &&
+            serviceability.status === 'success' &&
             formData.serviceType &&
             firstShipment &&
             !isNaN(parseFloat(firstShipment.weight)) && parseFloat(firstShipment.weight) > 0 &&
@@ -262,18 +315,9 @@ const CreateOrderPage: React.FC = () => {
             debouncedCalculateRates(formData);
         } else {
             setRateDetails(null);
+            setPincodeDetails(null);
         }
-    }, [
-        formData.senderPincode,
-        formData.receiverPincode,
-        formData.serviceType,
-        formData.shipments,
-        formData.products,
-        formData.insurance,
-        formData.cod,
-        debouncedCalculateRates,
-        formData
-    ]);
+    }, [formData, debouncedCalculateRates, serviceability.status]);
 
 
     const errors = useMemo(() => getValidationErrors(formData), [formData]);
@@ -310,16 +354,120 @@ const CreateOrderPage: React.FC = () => {
         return 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setHasAttemptedSubmit(true);
+
+        if (serviceability.status === 'error') {
+            addToast('Cannot create order. The pincode combination is not serviceable.', 'error');
+            return;
+        }
+
         const currentErrors = getValidationErrors(formData);
-        if (Object.keys(currentErrors).length === 0) {
-            console.log('Form Submitted:', formData);
-            addToast('Order created successfully!', 'success');
-        } else {
-            console.log('Validation Errors:', currentErrors);
+        if (Object.keys(currentErrors).length > 0) {
             addToast('Please fix the errors before submitting.', 'error');
+            return;
+        }
+
+        if (!rateDetails || !pincodeDetails) {
+            addToast('Rate calculation is not complete. Please wait or check your inputs.', 'error');
+            return;
+        }
+
+        setIsCreatingOrder(true);
+        try {
+            const buildAddress = (type: string, details: any, pincodeInfo: any) => ({
+                type,
+                zip: details.pincode,
+                name: details.name,
+                phone: details.phone,
+                email: details.email || '',
+                street: details.address,
+                landmark: "",
+                city: pincodeInfo.city,
+                state: pincodeInfo.state,
+                country: pincodeInfo.country || 'India',
+                latitude: 0,
+                longitude: 0,
+                addressName: details.address,
+            });
+            
+            const senderInfo = { name: formData.senderName, phone: formData.senderPhone, email: formData.senderEmail, address: formData.senderAddress, pincode: formData.senderPincode };
+            const receiverInfo = { name: formData.receiverName, phone: formData.receiverPhone, email: formData.receiverEmail, address: formData.receiverAddress, pincode: formData.receiverPincode };
+
+            const createOrderPayload = {
+                orderDate: new Date().toISOString(),
+                orderType: "FORWARD",
+                orderStatus: "CONFIRMED",
+                parcelCategory: "COURIER",
+                deliveryPromise: formData.serviceType,
+                metadata: { source: "WEB_APP" },
+                eWaybills: [],
+                documents: [],
+                addresses: [
+                    buildAddress("PICKUP", senderInfo, pincodeDetails.from),
+                    buildAddress("DELIVERY", receiverInfo, pincodeDetails.to),
+                    buildAddress("BILLING", receiverInfo, pincodeDetails.to),
+                    buildAddress("RETURN", senderInfo, pincodeDetails.from),
+                ],
+                shipments: formData.shipments.map(shipment => ({
+                    dimensions: {
+                        length: parseFloat(shipment.length),
+                        width: parseFloat(shipment.breadth),
+                        height: parseFloat(shipment.height),
+                    },
+                    shipmentStatus: "CONFIRMED",
+                    awbNumber: "",
+                    physicalWeight: parseFloat(shipment.weight),
+                    volumetricWeight: calculateVolumetricWeight(shipment),
+                    note: formData.remarks || "",
+                    items: formData.products.map(product => ({
+                        name: product.name,
+                        quantity: parseInt(product.quantity, 10),
+                        unitPrice: parseFloat(product.value),
+                        sku: "",
+                        hsnCode: "",
+                        description: product.type || "General Goods",
+                        taxes: [],
+                        discounts: [],
+                    })),
+                })),
+                payment: {
+                    finalAmount: rateDetails.totalAmount,
+                    type: "",
+                    breakdown: {
+                        otherCharges: [
+                            { name: "Base Rate", chargedAmount: rateDetails.baseRate },
+                            ...rateDetails.charges.map(charge => ({
+                                name: charge.chargeName,
+                                chargedAmount: charge.amount
+                            }))
+                        ]
+                    }
+                }
+            };
+            
+            const response = await apiClient.post('/gateway/booking-service/orders', createOrderPayload);
+            
+            if (response.status === 'success' && response.data?.orderId) {
+                const awb = response.data.shipments?.[0]?.awbNumber || 'N/A';
+                addToast(`Order created successfully! AWB: ${awb}`, 'success');
+                navigate(`/orders/view/${response.data.orderId}`);
+            } else if (response.id && response.orderId) { 
+                const awb = response.shipments?.[0]?.awbNumber || 'N/A';
+                addToast(`Order created successfully! AWB: ${awb}`, 'success');
+                navigate(`/orders/view/${response.orderId}`);
+            }
+            else {
+                throw new Error(response.message || 'Failed to create order. Invalid response from server.');
+            }
+
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : "An error occurred while creating the order.";
+            addToast(errorMessage, 'error');
+            console.error("Create Order Error:", error);
+        } finally {
+            setIsCreatingOrder(false);
         }
     };
     
@@ -373,6 +521,22 @@ const CreateOrderPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                        {serviceability.status !== 'idle' && (serviceability.status === 'loading' || (serviceability.status === 'error' && serviceability.message)) && (
+                            <div className="mt-4 p-3 rounded-md flex items-center gap-3 text-sm border">
+                                {serviceability.status === 'loading' && (
+                                    <>
+                                        <RefreshIcon className="w-5 h-5 animate-rotate text-muted-foreground" />
+                                        <span className="text-muted-foreground">Checking pincode serviceability...</span>
+                                    </>
+                                )}
+                                {serviceability.status === 'error' && serviceability.message && (
+                                    <>
+                                        <XCircleIcon className="w-5 h-5 text-error-main" />
+                                        <span className="text-error-darker">{serviceability.message}</span>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </SectionCard>
                     
                     <SectionCard icon={BoxIcon} title="Order Items">
@@ -531,8 +695,11 @@ const CreateOrderPage: React.FC = () => {
                             )}
 
                             <div className="mt-6">
-                                <button type="submit" className="w-full px-6 py-3 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed">
-                                    Create Order
+                                <button 
+                                    type="submit" 
+                                    disabled={isCreatingOrder}
+                                    className="w-full px-6 py-3 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed">
+                                    {isCreatingOrder ? 'Creating Order...' : 'Create Order'}
                                 </button>
                             </div>
                         </SectionCard>
