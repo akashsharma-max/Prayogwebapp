@@ -27,6 +27,10 @@ const getAuthHeaders = (): Record<string, string> => {
 
 const handleResponse = async (response: Response) => {
     if (!response.ok) {
+        if (response.status === 401) {
+            window.dispatchEvent(new Event('auth:session-expired'));
+        }
+
         let errorMessage = `API request failed with status ${response.status}`;
         let errorData = null;
         try {
@@ -76,6 +80,23 @@ const apiClient = {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(body),
+            });
+            return await handleResponse(response);
+        } finally {
+            loadingSpinner.hide();
+        }
+    },
+
+    upload: async (endpoint: string, formData: FormData) => {
+        loadingSpinner.show();
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    ...getAuthHeaders(),
+                    // Content-Type header is not set manually for FormData to allow the browser to set the boundary
+                },
+                body: formData,
             });
             return await handleResponse(response);
         } finally {

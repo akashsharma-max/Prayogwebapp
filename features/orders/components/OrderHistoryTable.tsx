@@ -180,7 +180,14 @@ const RowActions: React.FC<{ order: OrderEntity }> = ({ order }) => {
                                 )}
                             </button>
                         </li>
-                        <li><a href="#" className="flex items-center gap-2 px-4 py-2 hover:bg-muted"> <ExternalLinkIcon className="w-4 h-4" /> Track Order</a></li>
+                        <li>
+                            <Link 
+                                to={`/tracking?trackingId=${order.awbNumber}`} 
+                                className="flex items-center gap-2 px-4 py-2 hover:bg-muted"
+                            > 
+                                <ExternalLinkIcon className="w-4 h-4" /> Track Order
+                            </Link>
+                        </li>
                         {order.status === 'CONFIRMED' && (
                              <li><button onClick={handleCancel} className="flex items-center gap-2 w-full text-left px-4 py-2 text-error-main hover:bg-muted"> <TrashIcon className="w-4 h-4" /> Cancel Order</button></li>
                         )}
@@ -203,7 +210,7 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
         const newSelected: Record<string, boolean> = {};
         if (isChecked) {
             orders.forEach(order => {
-                if(order.status === 'CONFIRMED') newSelected[order.id] = true;
+                if(order.status === 'CONFIRMED') newSelected[order.orderId] = true;
             });
         }
         setSelectedRowIds(newSelected);
@@ -211,7 +218,7 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
 
     const isAllSelected = useMemo(() => {
         const selectableRows = orders.filter(o => o.status === 'CONFIRMED');
-        return selectableRows.length > 0 && selectableRows.every(o => selectedRowIds[o.id]);
+        return selectableRows.length > 0 && selectableRows.every(o => selectedRowIds[o.orderId]);
     }, [orders, selectedRowIds]);
 
     const visibleColumnCount = Object.values(columnVisibility).filter(Boolean).length;
@@ -260,8 +267,8 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
                                 {columnVisibility.selection && <td className="p-4" data-label="">
                                     <input
                                         type="checkbox"
-                                        checked={!!selectedRowIds[order.id]}
-                                        onChange={() => toggleRow(order.id)}
+                                        checked={!!selectedRowIds[order.orderId]}
+                                        onChange={() => toggleRow(order.orderId)}
                                         disabled={order.status !== 'CONFIRMED'}
                                         className="bg-card rounded border-border text-primary-main focus:ring-primary-main disabled:bg-muted"
                                     />

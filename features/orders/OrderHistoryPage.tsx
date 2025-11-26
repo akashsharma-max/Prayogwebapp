@@ -194,9 +194,44 @@ const OrderHistoryPage: React.FC = () => {
         fetchData();
     }, [fetchData]);
 
-    const handleBulkAction = (action: string) => {
+    const handleBulkAction = async (action: string) => {
+        const selectedOrderIds = Object.keys(state.selectedRowIds).filter(id => state.selectedRowIds[id]);
+
+        if (selectedOrderIds.length === 0) {
+            addToast('No orders selected', 'error');
+            return;
+        }
+
+        if (action === 'Generate Manifest') {
+             dispatch({ type: 'START_BULK_ACTION' });
+             try {
+                const response = await apiClient.post('/gateway/booking-service/orders/manifest/bulk', {
+                    orderIds: selectedOrderIds
+                });
+
+                if (response.status === 'success' || (response.data && response.status !== 'error')) {
+                     addToast('Manifest generated successfully', 'success');
+                     if (response.data?.manifestUrl) {
+                         window.open(response.data.manifestUrl, '_blank');
+                     }
+                     // Clear selection after successful action
+                     dispatch({ type: 'SET_SELECTED_ROWS', payload: {} });
+                     fetchData(); // Refresh list to reflect changes
+                } else {
+                    throw new Error(response.message || 'Failed to generate manifest');
+                }
+             } catch (error) {
+                 const errorMessage = error instanceof ApiError ? error.message : "Failed to generate manifest";
+                 addToast(errorMessage, 'error');
+                 console.error("Bulk Action Error:", error);
+             } finally {
+                 dispatch({ type: 'END_BULK_ACTION' });
+             }
+             return;
+        }
+
         dispatch({ type: 'START_BULK_ACTION' });
-        console.log(`Performing ${action} on IDs:`, Object.keys(state.selectedRowIds));
+        console.log(`Performing ${action} on IDs:`, selectedOrderIds);
         setTimeout(() => {
             dispatch({ type: 'END_BULK_ACTION' });
             fetchData();

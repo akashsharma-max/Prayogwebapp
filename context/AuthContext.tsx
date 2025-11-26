@@ -1,5 +1,4 @@
-
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import apiClient from '../lib/apiClient';
 
@@ -63,10 +62,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('authData');
-  };
+  }, []);
+
+  useEffect(() => {
+      const handleSessionExpired = () => {
+          logout();
+      };
+      window.addEventListener('auth:session-expired', handleSessionExpired);
+      return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>

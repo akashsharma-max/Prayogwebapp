@@ -30,6 +30,8 @@ const FormField: React.FC<{ label: string, name: string, required?: boolean, err
 // State interfaces
 interface Product { id: number; type: string; name: string; value: string; quantity: string; }
 interface Shipment { id: number; weight: string; length: string; breadth: string; height: string; }
+interface UploadedDocument { url: string; type: string; fileName: string; }
+
 interface FormState {
     senderName: string; senderPhone: string; senderAddress: string; senderPincode: string; senderGst: string; senderEmail: string;
     receiverName: string; receiverPhone: string; receiverAddress: string; receiverPincode: string; receiverEmail: string;
@@ -37,6 +39,8 @@ interface FormState {
     shipments: Shipment[];
     documentNumber: string; serviceType: string; cod: boolean; insurance: boolean;
     ewayBill: string; remarks: string;
+    addedEwayBills: string[];
+    uploadedDocuments: UploadedDocument[];
 }
 type FormErrors = { [K in keyof FormState]?: string | any };
 
@@ -163,6 +167,8 @@ const CreateOrderPage: React.FC = () => {
         shipments: [initialShipment],
         documentNumber: '', serviceType: '', cod: false, insurance: false,
         ewayBill: '', remarks: '',
+        addedEwayBills: [],
+        uploadedDocuments: []
     });
     
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -172,6 +178,8 @@ const CreateOrderPage: React.FC = () => {
     const [isCalculatingRate, setIsCalculatingRate] = useState(false);
     const [pincodeDetails, setPincodeDetails] = useState<PincodeDetails | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [isVerifyingEwayBill, setIsVerifyingEwayBill] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [serviceability, setServiceability] = useState<{
         status: 'idle' | 'loading' | 'success' | 'error';
         message: string | null;
@@ -346,6 +354,91 @@ const CreateOrderPage: React.FC = () => {
     const addShipment = () => setFormData(p => ({ ...p, shipments: [...p.shipments, { ...initialShipment, id: Date.now() }] }));
     const removeShipment = (index: number) => setFormData(p => ({ ...p, shipments: p.shipments.filter((_, i) => i !== index) }));
 
+    const handleAddEwayBill = async () => {
+        const ewbNo = formData.ewayBill.trim();
+        if (!ewbNo) return;
+        
+        if (formData.addedEwayBills.includes(ewbNo)) {
+            addToast('E-Way Bill already added.', 'error');
+            return;
+        }
+    
+        setIsVerifyingEwayBill(true);
+        try {
+            const response = await apiClient.get(`/gateway/ewaybill/${ewbNo}`);
+            
+            if (response.status === true && response.data) {
+                 if (response.data.isEwaybillValid) {
+                     setFormData(prev => ({
+                         ...prev,
+                         addedEwayBills: [...prev.addedEwayBills, ewbNo],
+                         ewayBill: '' // Clear input
+                     }));
+                     addToast('E-Way Bill added successfully.', 'success');
+                 } else {
+                     const expiry = response.data.validUpto || 'Unknown date';
+                     addToast(`E-Way Bill expired or invalid. Valid upto: ${expiry}`, 'error');
+                 }
+            } else {
+                 throw new Error(response.message || 'Invalid E-Way Bill response');
+            }
+        } catch (error) {
+             const msg = error instanceof ApiError ? error.message : "Failed to verify E-Way Bill";
+             addToast(msg, 'error');
+        } finally {
+            setIsVerifyingEwayBill(false);
+        }
+    };
+    
+    const handleRemoveEwayBill = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            addedEwayBills: prev.addedEwayBills.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const uploadData = new FormData();
+            uploadData.append('files', file);
+            uploadData.append('fileType', file.type);
+            uploadData.append('path', 'prayog/uploads/');
+
+            setIsUploading(true);
+            try {
+                const response = await apiClient.upload('/gateway/file-service/upload', uploadData);
+                if (response.status === 200 && response.data && response.data.length > 0) {
+                     const uploadedFile = response.data[0];
+                     setFormData(prev => ({
+                         ...prev,
+                         uploadedDocuments: [...prev.uploadedDocuments, {
+                             url: uploadedFile.url,
+                             type: file.type,
+                             fileName: uploadedFile.originalFileName || file.name
+                         }]
+                     }));
+                     addToast('File uploaded successfully', 'success');
+                } else {
+                     throw new Error(response.message || 'Upload failed');
+                }
+            } catch (error) {
+                console.error(error);
+                addToast('Failed to upload file', 'error');
+            } finally {
+                setIsUploading(false);
+                e.target.value = ''; // Reset input to allow re-uploading the same file
+            }
+        }
+    };
+
+    const removeDocument = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            uploadedDocuments: prev.uploadedDocuments.filter((_, i) => i !== index)
+        }));
+    };
+
     const calculateVolumetricWeight = (shipment: Shipment) => {
         const { length, breadth, height } = shipment;
         if (length && breadth && height) {
@@ -402,8 +495,11 @@ const CreateOrderPage: React.FC = () => {
                 parcelCategory: "COURIER",
                 deliveryPromise: formData.serviceType,
                 metadata: { source: "WEB_APP" },
-                eWaybills: [],
-                documents: [],
+                eWaybills: formData.addedEwayBills,
+                documents: formData.uploadedDocuments.map(doc => ({
+                    type: doc.type,
+                    url: doc.url
+                })),
                 addresses: [
                     buildAddress("PICKUP", senderInfo, pincodeDetails.from),
                     buildAddress("DELIVERY", receiverInfo, pincodeDetails.to),
@@ -473,7 +569,7 @@ const CreateOrderPage: React.FC = () => {
     
     return (
         <form onSubmit={handleSubmit} noValidate>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <SectionCard icon={TruckIcon} title="Sender & Receiver Details">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -638,7 +734,42 @@ const CreateOrderPage: React.FC = () => {
                                 </select>
                             </FormField>
                             <FormField label="E-way Bill Number" name="ewayBill">
-                                <input type="text" name="ewayBill" value={formData.ewayBill} onChange={handleInputChange} className="w-full p-2 border border-border rounded-md bg-input focus:ring-primary-main"/>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        name="ewayBill" 
+                                        value={formData.ewayBill} 
+                                        onChange={handleInputChange} 
+                                        className="w-full p-2 border border-border rounded-md bg-input focus:ring-primary-main"
+                                        placeholder="Enter E-Way Bill No"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddEwayBill();
+                                            }
+                                        }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleAddEwayBill}
+                                        disabled={isVerifyingEwayBill || !formData.ewayBill.trim()}
+                                        className="px-4 py-2 bg-primary-main text-white rounded-md hover:bg-primary-dark disabled:bg-muted disabled:cursor-not-allowed flex items-center"
+                                    >
+                                        {isVerifyingEwayBill ? <RefreshIcon className="animate-rotate w-4 h-4"/> : 'Add'}
+                                    </button>
+                                </div>
+                                {formData.addedEwayBills.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {formData.addedEwayBills.map((bill, index) => (
+                                            <div key={index} className="flex items-center gap-1 bg-primary-lighter text-primary-darker px-2 py-1 rounded-md text-sm">
+                                                <span>{bill}</span>
+                                                <button type="button" onClick={() => handleRemoveEwayBill(index)} className="text-primary-darker hover:text-red-600">
+                                                    <XCircleIcon className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </FormField>
                             <div>
                                 <label className="block text-sm font-medium text-muted-foreground mb-2">Additional Services</label>
@@ -648,7 +779,35 @@ const CreateOrderPage: React.FC = () => {
                                 </div>
                             </div>
                             <FormField label="Document Attachment" name="attachment">
-                                <input type="file" className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-lighter file:text-primary-main hover:file:bg-primary-main hover:file:text-white"/>
+                                <div className="flex items-center gap-2">
+                                     <div className="relative">
+                                        <input 
+                                            type="file" 
+                                            onChange={handleFileUpload}
+                                            disabled={isUploading}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                        />
+                                        <button type="button" className={`px-4 py-2 bg-primary-lighter text-primary-main rounded-md text-sm font-medium hover:bg-primary-light flex items-center gap-2 ${isUploading ? 'opacity-50' : ''}`}>
+                                             {isUploading ? <RefreshIcon className="w-4 h-4 animate-rotate"/> : <DocumentTextIcon className="w-4 h-4"/>}
+                                             {isUploading ? 'Uploading...' : 'Choose File'}
+                                        </button>
+                                     </div>
+                                </div>
+                                {formData.uploadedDocuments.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        {formData.uploadedDocuments.map((doc, index) => (
+                                            <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+                                                <div className="flex items-center gap-2 truncate">
+                                                     <DocumentTextIcon className="w-4 h-4 text-muted-foreground flex-shrink-0"/>
+                                                     <a href={doc.url} target="_blank" rel="noreferrer" className="truncate hover:underline text-primary-main">{doc.fileName}</a>
+                                                </div>
+                                                <button type="button" onClick={() => removeDocument(index)} className="text-muted-foreground hover:text-error-main p-1">
+                                                    <XCircleIcon className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </FormField>
                             <div className="md:col-span-2">
                                 <FormField label="Remarks" name="remarks">

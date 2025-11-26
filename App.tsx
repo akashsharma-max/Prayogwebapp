@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
@@ -15,6 +17,7 @@ import RateCardsPage from './features/rate-cards/RateCardsPage';
 import OrderHistoryPage from './features/orders/OrderHistoryPage';
 import OrderDetailsPage from './features/orders/OrderDetailsPage';
 import CreateOrderPage from './features/orders/CreateOrderPage';
+import TrackingPage from './features/tracking/TrackingPage';
 import { XCircleIcon, CheckCircleIcon } from './components/icons';
 import loadingSpinner from './lib/loadingSpinner';
 
@@ -138,6 +141,7 @@ const routeComponentMap: { [path: string]: React.ComponentType } = {
   '/finance/rate-cards': RateCardsPage,
   '/orders/view': OrderHistoryPage,
   '/orders/create': CreateOrderPage,
+  '/tracking': TrackingPage,
 };
 
 

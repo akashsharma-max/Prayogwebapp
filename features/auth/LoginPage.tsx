@@ -1,8 +1,7 @@
-
-
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ViewIcon, ViewOffIcon } from '../../components/icons';
 
 const PrayogLogo = () => (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,18 +21,23 @@ const PrayogLogo = () => (
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
+
+  if (isAuthenticated) {
+      return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    const success = await auth.login(email, password);
+    const success = await login(email, password);
     setIsLoading(false);
     if (success) {
       navigate(from, { replace: true });
@@ -71,19 +75,30 @@ const LoginPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div>
+              <div className="relative">
                 <label htmlFor="password-sr" className="sr-only">Password</label>
                 <input
                   id="password-sr"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className="appearance-none block w-full px-3 py-3 border border-border rounded-lg placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-primary-main focus:border-primary-main sm:text-sm"
+                  className="appearance-none block w-full px-3 py-3 border border-border rounded-lg placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-primary-main focus:border-primary-main sm:text-sm pr-10"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground focus:outline-none"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <ViewOffIcon className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <ViewIcon className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </button>
               </div>
             </div>
             <div className="flex items-center justify-end mt-4">
