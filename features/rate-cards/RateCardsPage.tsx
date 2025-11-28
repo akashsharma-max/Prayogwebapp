@@ -1,6 +1,5 @@
-
-
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RateCardTable from './components/RateCardTable';
 import { rateCards as allRateCards } from '../../mocks/data';
 
@@ -10,6 +9,7 @@ const SearchIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 const RateCardsPage: React.FC = () => {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredRateCards = useMemo(() => {
@@ -38,7 +38,10 @@ const RateCardsPage: React.FC = () => {
                         className="block w-full pl-10 pr-3 py-2 border border-border rounded-lg leading-5 bg-input placeholder-muted-foreground text-foreground focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-main focus:border-primary-main sm:text-sm"
                     />
                 </div>
-                 <button className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors w-full md:w-auto flex-shrink-0">
+                 <button 
+                    onClick={() => navigate('/finance/rate-cards/create')}
+                    className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors w-full md:w-auto flex-shrink-0"
+                 >
                     + Add New Card
                 </button>
             </div>

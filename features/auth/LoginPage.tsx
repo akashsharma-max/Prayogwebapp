@@ -37,12 +37,12 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    const success = await login(email, password);
+    const result = await login(email, password);
     setIsLoading(false);
-    if (success) {
+    if (result.success) {
       navigate(from, { replace: true });
     } else {
-      setError('Invalid email or password.');
+      setError(result.message || 'Invalid email or password.');
     }
   };
 

@@ -277,7 +277,9 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ orders, isLoading
                                 {columnVisibility.awbNumber && <td data-label="Document Number" className="px-4 py-3 font-medium text-foreground">
                                     <div className="flex items-center gap-2">
                                         {order.parcelCategory === 'INTERNATIONAL' && <PlaneIcon className="w-4 h-4 text-primary-main" />}
-                                        {order.awbNumber}
+                                        <Link to={`/orders/view/${order.orderId}`} className="hover:text-primary-main hover:underline">
+                                            {order.awbNumber}
+                                        </Link>
                                     </div>
                                 </td>}
                                 {columnVisibility.orderId && <td data-label="Order ID" className="px-4 py-3">{order.orderId}</td>}

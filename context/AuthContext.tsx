@@ -1,11 +1,11 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { User } from '../types';
-import apiClient from '../lib/apiClient';
+import apiClient, { ApiError } from '../lib/apiClient';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, pass: string) => Promise<boolean>;
+  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -20,6 +20,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (storedData) {
         const authData = JSON.parse(storedData);
         if (authData && authData.id_token) {
+            // Check for token expiry if possible, or just load user
           setUser({
             id: authData.user_id,
             name: authData.user_email.split('@')[0], // Using part of email as name
@@ -36,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const isAuthenticated = !!user;
 
-  const login = async (email: string, pass: string): Promise<boolean> => {
+  const login = async (email: string, pass: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const data = await apiClient.post('/auth/login', {
         username: email,
@@ -52,13 +53,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           email: data.user_email,
           avatarUrl: `https://i.pravatar.cc/150?u=${data.user_id}`,
         });
-        return true;
+        return { success: true };
       }
       
-      return false;
+      return { success: false, message: 'Invalid credentials or unexpected response.' };
     } catch (error) {
       console.error('An error occurred during login:', error);
-      return false;
+      const message = error instanceof ApiError ? error.message : 'An unexpected error occurred during login.';
+      return { success: false, message };
     }
   };
 

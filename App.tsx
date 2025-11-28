@@ -1,8 +1,3 @@
-
-
-
-
-
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
@@ -14,10 +9,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { NavItem, ToastMessage, ToastType } from './types';
 import { mainNav, settingsNav } from './navigation';
 import RateCardsPage from './features/rate-cards/RateCardsPage';
+import CreateRateCardPage from './features/rate-cards/CreateRateCardPage';
 import OrderHistoryPage from './features/orders/OrderHistoryPage';
 import OrderDetailsPage from './features/orders/OrderDetailsPage';
 import CreateOrderPage from './features/orders/CreateOrderPage';
 import TrackingPage from './features/tracking/TrackingPage';
+import SubTenantsPage from './features/network/SubTenantsPage';
 import { XCircleIcon, CheckCircleIcon } from './components/icons';
 import loadingSpinner from './lib/loadingSpinner';
 
@@ -142,6 +139,7 @@ const routeComponentMap: { [path: string]: React.ComponentType } = {
   '/orders/view': OrderHistoryPage,
   '/orders/create': CreateOrderPage,
   '/tracking': TrackingPage,
+  '/network/sub-tenants': SubTenantsPage,
 };
 
 
@@ -177,6 +175,7 @@ const App: React.FC = () => {
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               {generateRoutes(mainNav)}
+              <Route path="/finance/rate-cards/create" element={<CreateRateCardPage />} />
               <Route path="/orders/view/:orderId" element={<OrderDetailsPage />} />
             </Route>
             <Route path="/settings" element={<SettingsLayout />}>
