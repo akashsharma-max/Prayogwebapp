@@ -1,10 +1,9 @@
-
-
 import React from 'react';
 import { RateCard, RateCardStatus } from '../../../types';
 
 interface RateCardTableProps {
     rateCards: RateCard[];
+    isLoading?: boolean;
 }
 
 const StatusBadge: React.FC<{ status: RateCardStatus }> = ({ status }) => {
@@ -25,7 +24,7 @@ const StatusBadge: React.FC<{ status: RateCardStatus }> = ({ status }) => {
     return <span className={`${baseClasses} ${colorClasses}`}>{status}</span>;
 };
 
-const RateCardTable: React.FC<RateCardTableProps> = ({ rateCards }) => {
+const RateCardTable: React.FC<RateCardTableProps> = ({ rateCards, isLoading = false }) => {
     return (
         <div className="bg-card rounded-lg shadow-custom-light overflow-hidden border border-border">
             <div className="overflow-x-auto">
@@ -41,20 +40,41 @@ const RateCardTable: React.FC<RateCardTableProps> = ({ rateCards }) => {
                         </tr>
                     </thead>
                     <tbody className="bg-card divide-y divide-border">
-                        {rateCards.map((card) => (
-                            <tr key={card.id} className="hover:bg-muted">
-                                <td data-label="Name" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{card.name}</td>
-                                <td data-label="Region" className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{card.region}</td>
-                                <td data-label="Service" className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{card.service}</td>
-                                <td data-label="Price" className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${card.price.toFixed(2)}</td>
-                                <td data-label="Status" className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <StatusBadge status={card.status} />
-                                </td>
-                                <td data-label="Actions" className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" className="text-primary-main hover:text-primary-dark">Edit</a>
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <tr key={i} className="animate-pulse">
+                                    <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-3/4"></div></td>
+                                    <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-1/2"></div></td>
+                                    <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-1/2"></div></td>
+                                    <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-1/4"></div></td>
+                                    <td className="px-6 py-4"><div className="h-5 bg-muted rounded w-16"></div></td>
+                                    <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-8 ml-auto"></div></td>
+                                </tr>
+                            ))
+                        ) : rateCards.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                                    No rate cards found.
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            rateCards.map((card) => (
+                                <tr key={card.id} className="hover:bg-muted">
+                                    <td data-label="Name" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{card.name}</td>
+                                    <td data-label="Region" className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{card.region}</td>
+                                    <td data-label="Service" className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{card.service}</td>
+                                    <td data-label="Price" className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                        {typeof card.price === 'number' ? `$${card.price.toFixed(2)}` : card.price}
+                                    </td>
+                                    <td data-label="Status" className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <StatusBadge status={card.status} />
+                                    </td>
+                                    <td data-label="Actions" className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" className="text-primary-main hover:text-primary-dark">Edit</a>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

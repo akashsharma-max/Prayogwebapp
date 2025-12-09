@@ -248,7 +248,7 @@ export interface RateCard {
   name: string;
   region: string;
   service: string;
-  price: number;
+  price: number | string;
   status: RateCardStatus;
 }
 

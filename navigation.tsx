@@ -22,6 +22,7 @@ export const mainNav: NavItem[] = [
   
   { isHeader: true, title: 'Finance' },
   { title: 'Rate Cards', path: '/finance/rate-cards', icon: Icons.FinanceIcon },
+  { title: 'Zone Management', path: '/finance/zone-management', icon: Icons.LocationPinIcon },
   { title: 'CA Calculator', path: '/finance/ca-calculator', icon: Icons.FinanceIcon },
   {
     title: 'Billings & Payments',
