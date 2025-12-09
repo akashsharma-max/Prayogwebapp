@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export interface NavItem {
@@ -251,6 +252,51 @@ export interface RateCard {
   price: number | string;
   status: RateCardStatus;
 }
+
+// Detailed Rate Card Types
+export interface RateCardDimension {
+    dimensionKey: string;
+    minValue: string;
+    maxValue: string | null;
+    unit: string;
+}
+
+export interface RateCardFilter {
+    filterKey: string;
+    filterValue: string;
+}
+
+export interface RateCardMatrixRow {
+    id: string;
+    rate: string;
+    unit: string | null;
+    currency: string;
+    location?: string;
+    dimensions: RateCardDimension[];
+    filters: RateCardFilter[];
+}
+
+export interface RateCardMatrix {
+    id: string;
+    matrixKey: string;
+    rows: RateCardMatrixRow[];
+}
+
+export interface RateCardCharge {
+    id: string;
+    chargeName: string;
+    chargeCode: string;
+    chargeType: string;
+    calculationConfig: any;
+    isActive: boolean;
+    isTax: boolean;
+}
+
+export interface RateCardDetailed extends RateCard {
+    matrices: RateCardMatrix[];
+    charges: RateCardCharge[];
+}
+
 
 // Toast Notification Types
 export type ToastType = 'success' | 'error';

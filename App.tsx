@@ -11,6 +11,7 @@ import { NavItem, ToastMessage, ToastType } from './types';
 import { mainNav, settingsNav } from './navigation';
 import RateCardsPage from './features/rate-cards/RateCardsPage';
 import CreateRateCardPage from './features/rate-cards/CreateRateCardPage';
+import RateCardDetailsPage from './features/rate-cards/RateCardDetailsPage';
 import OrderHistoryPage from './features/orders/OrderHistoryPage';
 import OrderDetailsPage from './features/orders/OrderDetailsPage';
 import CreateOrderPage from './features/orders/CreateOrderPage';
@@ -179,6 +180,7 @@ const App: React.FC = () => {
               <Route index element={<Navigate to="/dashboard" replace />} />
               {generateRoutes(mainNav)}
               <Route path="/finance/rate-cards/create" element={<CreateRateCardPage />} />
+              <Route path="/finance/rate-cards/view/:id" element={<RateCardDetailsPage />} />
               <Route path="/orders/view/:orderId" element={<OrderDetailsPage />} />
             </Route>
             <Route path="/settings" element={<SettingsLayout />}>

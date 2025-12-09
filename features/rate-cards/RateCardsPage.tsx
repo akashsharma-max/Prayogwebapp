@@ -1,10 +1,85 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import RateCardTable from './components/RateCardTable';
-import { SearchIcon, RefreshIcon } from '../../components/icons';
+import { SearchIcon, RefreshIcon, PlusCircleIcon, DocumentTextIcon } from '../../components/icons';
 import apiClient, { ApiError } from '../../lib/apiClient';
 import { useToast } from '../../App';
 import { RateCard, RateCardStatus } from '../../types';
+
+const StatusBadge: React.FC<{ status: RateCardStatus }> = ({ status }) => {
+    const baseClasses = "px-2.5 py-1 text-xs font-semibold rounded-full";
+    let colorClasses = "";
+
+    switch (status) {
+        case RateCardStatus.Active:
+            colorClasses = "bg-success-lighter text-success-darker dark:bg-success-darker dark:text-success-light";
+            break;
+        case RateCardStatus.Inactive:
+            colorClasses = "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200";
+            break;
+        case RateCardStatus.Draft:
+            colorClasses = "bg-info-lighter text-info-darker dark:bg-info-darker dark:text-info-light";
+            break;
+    }
+    return <span className={`${baseClasses} ${colorClasses}`}>{status}</span>;
+};
+
+const RateCardItem: React.FC<{ data: RateCard, onView: (id: string) => void }> = ({ data, onView }) => (
+    <div className="bg-card border border-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+        <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-lighter text-primary-main rounded-lg">
+                    <DocumentTextIcon className="w-6 h-6" />
+                </div>
+                <div>
+                    <h3 className="font-semibold text-foreground line-clamp-1" title={data.name}>{data.name}</h3>
+                    <p className="text-xs text-muted-foreground">{data.region}</p>
+                </div>
+            </div>
+            <StatusBadge status={data.status} />
+        </div>
+        
+        <div className="space-y-3 mb-6 flex-grow">
+            <div className="flex justify-between text-sm py-2 border-b border-border border-dashed">
+                <span className="text-muted-foreground">Service Types</span>
+                <span className="font-medium text-foreground text-right">{data.service}</span>
+            </div>
+            <div className="flex justify-between text-sm py-2 border-b border-border border-dashed">
+                <span className="text-muted-foreground">Base Price</span>
+                <span className="font-medium text-foreground">
+                    {typeof data.price === 'number' ? `$${data.price}` : data.price}
+                </span>
+            </div>
+        </div>
+
+        <button 
+            onClick={() => onView(data.id)} 
+            className="w-full py-2.5 border border-primary-main text-primary-main rounded-md hover:bg-primary-lighter transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-main focus:ring-offset-2"
+        >
+            View Details
+        </button>
+    </div>
+);
+
+const RateCardSkeleton = () => (
+    <div className="bg-card border border-border rounded-lg p-5 shadow-sm h-64 animate-pulse flex flex-col">
+        <div className="flex justify-between items-start mb-6">
+            <div className="flex gap-3 w-full">
+                <div className="w-10 h-10 bg-muted rounded-lg"></div>
+                <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                </div>
+            </div>
+            <div className="w-16 h-6 bg-muted rounded-full"></div>
+        </div>
+        <div className="space-y-4 flex-grow">
+             <div className="h-4 bg-muted rounded w-full"></div>
+             <div className="h-4 bg-muted rounded w-full"></div>
+        </div>
+        <div className="h-10 bg-muted rounded w-full mt-4"></div>
+    </div>
+);
 
 const RateCardsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -35,14 +110,11 @@ const RateCardsPage: React.FC = () => {
                 const mappedData: RateCard[] = response.data.map((item: any) => ({
                     id: item.id,
                     name: item.name,
-                    // API doesn't provide a direct region name, using a placeholder or derivation
-                    region: 'Multi-Zone', 
-                    // Join matrix keys as service names, or fallback to product type
+                    region: item.zoneGroupId ? 'Zone Based' : 'Global', 
                     service: item.matrices?.length > 0 
                         ? item.matrices.map((m: any) => m.matrixKey).join(', ') 
                         : item.productType,
-                    // Price is complex (matrices + slabs), so we show "Variable" or similar
-                    price: 'Variable',
+                    price: 'Variable', // Complex pricing structure
                     status: item.isActive ? RateCardStatus.Active : RateCardStatus.Inactive
                 }));
                 
@@ -67,17 +139,16 @@ const RateCardsPage: React.FC = () => {
         }
     }, [pagination.page, pagination.limit, searchTerm, addToast]);
 
-    // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchRateCards();
         }, 500);
         return () => clearTimeout(timer);
-    }, [fetchRateCards]); // searchTerm is dependency of fetchRateCards via callback dependency array
+    }, [fetchRateCards]); 
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
-        setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page on search
+        setPagination(prev => ({ ...prev, page: 1 })); 
     };
 
     const handlePageChange = (newPage: number) => {
@@ -88,20 +159,20 @@ const RateCardsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="p-4 bg-card rounded-lg shadow-custom-light border border-border flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="relative w-full md:flex-grow">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card p-4 rounded-lg border border-border shadow-custom-light">
+                <div className="relative w-full sm:w-96">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <SearchIcon className="text-muted-foreground" />
                     </div>
                     <input
                         type="text"
-                        placeholder="Search by rate card name..."
+                        placeholder="Search rate cards..."
                         value={searchTerm}
                         onChange={handleSearchChange}
-                        className="block w-full pl-10 pr-3 py-2 border border-border rounded-lg leading-5 bg-input placeholder-muted-foreground text-foreground focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-main focus:border-primary-main sm:text-sm"
+                        className="block w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-input placeholder-muted-foreground text-foreground focus:outline-none focus:ring-1 focus:ring-primary-main focus:border-primary-main"
                     />
                 </div>
-                 <div className="flex gap-2 w-full md:w-auto">
+                 <div className="flex gap-3 w-full sm:w-auto">
                     <button 
                         onClick={() => fetchRateCards()}
                         className="p-2 border border-border rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -111,14 +182,32 @@ const RateCardsPage: React.FC = () => {
                     </button>
                     <button 
                         onClick={() => navigate('/finance/rate-cards/create')}
-                        className="px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-main transition-colors w-full md:w-auto flex-shrink-0"
+                        className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-main rounded-lg hover:bg-primary-dark transition-colors w-full sm:w-auto"
                     >
-                        + Add New Card
+                        <PlusCircleIcon className="w-5 h-5" />
+                        Add New Card
                     </button>
                  </div>
             </div>
 
-            <RateCardTable rateCards={rateCards} isLoading={isLoading} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {isLoading && Array.from({ length: 8 }).map((_, i) => <RateCardSkeleton key={i} />)}
+                
+                {!isLoading && rateCards.length === 0 && (
+                    <div className="col-span-full py-12 text-center text-muted-foreground bg-card rounded-lg border border-border">
+                        <p className="text-lg font-medium">No rate cards found</p>
+                        <p className="text-sm">Try adjusting your search terms or create a new one.</p>
+                    </div>
+                )}
+
+                {!isLoading && rateCards.map((card) => (
+                    <RateCardItem 
+                        key={card.id} 
+                        data={card} 
+                        onView={(id) => navigate(`/finance/rate-cards/view/${id}`)} 
+                    />
+                ))}
+            </div>
             
             {!isLoading && pagination.total > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-card rounded-lg border border-border">
