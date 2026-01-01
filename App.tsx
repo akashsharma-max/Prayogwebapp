@@ -17,6 +17,7 @@ import OrderDetailsPage from './features/orders/OrderDetailsPage';
 import CreateOrderPage from './features/orders/CreateOrderPage';
 import TrackingPage from './features/tracking/TrackingPage';
 import SubTenantsPage from './features/network/SubTenantsPage';
+import UsersPage from './features/network/UsersPage';
 import ZoneManagementPage from './features/finance/ZoneManagementPage';
 import { XCircleIcon, CheckCircleIcon } from './components/icons';
 import loadingSpinner from './lib/loadingSpinner';
@@ -143,6 +144,7 @@ const routeComponentMap: { [path: string]: React.ComponentType } = {
   '/orders/create': CreateOrderPage,
   '/tracking': TrackingPage,
   '/network/sub-tenants': SubTenantsPage,
+  '/network/users': UsersPage,
   '/finance/zone-management': ZoneManagementPage,
 };
 
